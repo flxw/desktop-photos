@@ -17,8 +17,8 @@ public class GraphicsController {
         this.graphicsDatabase = graphicsDatabase;
     }
 
-    @GetMapping
+    /*@GetMapping
     public List<String> getAllGraphics() {
         return graphicsDatabase.getAllGraphics();
-    }
+    }*/
 }
