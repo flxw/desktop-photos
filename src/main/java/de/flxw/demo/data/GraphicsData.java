@@ -2,13 +2,14 @@ package de.flxw.demo.data;
 
 import lombok.Getter;
 
-public class GraphicsData {
+import java.io.Serializable;
+
+public class GraphicsData implements Serializable {
 
     @Getter private String fileName;
     @Getter private String checkSum;
     @Getter private String timeStamp;
     @Getter private boolean valid;
-
 
     public GraphicsData(String fileName, String checkSum, String timeStamp, boolean valid) {
         this.fileName = fileName;
@@ -19,9 +20,7 @@ public class GraphicsData {
 
     @Override
     public String toString() {
-        return "GraphicsData{" +
-                "fileName='" + fileName + '\'' +
-                ", checkSum='" + checkSum + '\'' +
+        return fileName + "{checkSum='" + checkSum + '\'' +
                 ", timeStamp='" + timeStamp + '\'' +
                 ", valid=" + valid +
                 '}';

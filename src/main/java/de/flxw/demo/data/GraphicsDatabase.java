@@ -15,8 +15,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,9 +67,8 @@ public class GraphicsDatabase {
                     .map(x -> x.toString())
                     .filter(this::isImage)
                     .map(this::createGraphicsObject)
+                    .filter(x -> x.isValid())
                     .collect(Collectors.toList());
-
-                db.forEach(System.out::println);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -86,7 +85,7 @@ public class GraphicsDatabase {
 
             String cs = generateChecksum(f);
             String time = extractTimeTaken(f);
-            boolean valid = (cs == "");
+            boolean valid = (cs != "");
 
             return new GraphicsData(fileName, cs, time, valid);
         }
@@ -110,6 +109,12 @@ public class GraphicsDatabase {
                 Directory exif = mt.getFirstDirectoryOfType(ExifIFD0Directory.class);
                 return exif.getString(ExifIFD0Directory.TAG_DATETIME);
             } catch (Exception e) {
+            }
+
+            try {
+                BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+                return attr.creationTime().toString();
+            } catch (Exception ex) {
                 return "";
             }
         }
