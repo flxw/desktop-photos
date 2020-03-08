@@ -35,9 +35,9 @@ public class GraphicsDatabase {
         File dbFile = new File(Configuration.DB_NAME);
 
         if (dbFile.exists()) {
-            LOG.info("Reusing database files is not supported yet!");
+            LOG.info("Found a database file, updating and reusing it");
 
-            //dbWorker = new ReuseDbWorker();
+            dbWorker = new ReuseDbWorker();
 
             // read db file
             // create diff filetree
@@ -47,9 +47,9 @@ public class GraphicsDatabase {
         } else {
             LOG.info("No database found, populating and creating a new one");
             dbWorker = new InitDbWorker();
-            dbWorker.run();
         }
 
+        dbWorker.run();
         /* spawn a thread here after the application has fully gone up.
            the thread should read in the DB file, and update its contents
            if the file did not exist, the thread should create it in the first place
@@ -165,6 +165,23 @@ public class GraphicsDatabase {
             LOG.info("InitDbWorker scanned files: " + db.size());
             this.commitToDb();
             LOG.info("Committed update image database to " + Configuration.DB_NAME);
+        }
+    }
+
+    private class ReuseDbWorker extends DbWorker {
+        public void run() {
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(Configuration.DB_NAME);
+                ObjectInputStream ois = new ObjectInputStream(fis);
+                db = (List<GraphicsData>) ois.readObject();
+
+                ois.close();
+                commitToDb();
+            } catch (Exception e) {
+                LOG.error("FATAL! Reusing the existing db failed! Delete it to fix the issue.");
+                e.printStackTrace();
+            }
         }
     }
 }
