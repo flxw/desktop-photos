@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
+import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +18,9 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,22 +41,12 @@ public class GraphicsDatabase {
             LOG.info("Found a database file, updating and reusing it");
 
             dbWorker = new ReuseDbWorker();
-
-            // read db file
-            // create diff filetree
-            // drop deleted
-            // add new
-            // update changed
         } else {
             LOG.info("No database found, populating and creating a new one");
             dbWorker = new InitDbWorker();
         }
 
-        dbWorker.run();
-        /* spawn a thread here after the application has fully gone up.
-           the thread should read in the DB file, and update its contents
-           if the file did not exist, the thread should create it in the first place
-         */
+        dbWorker.start();
     }
 
     private abstract class DbWorker extends Thread {
@@ -63,6 +56,7 @@ public class GraphicsDatabase {
                 ObjectOutputStream oos = new ObjectOutputStream(fos);
                 oos.writeObject(db);
                 oos.close();
+                LOG.info("Committed update image database to " + Configuration.DB_NAME);
             } catch (IOException e) {
                 LOG.error("Could not save the database to location " + Configuration.DB_NAME);
             }
@@ -81,9 +75,14 @@ public class GraphicsDatabase {
 
             String cs = generateChecksum(f);
             String time = extractTimeTaken(f);
-            boolean valid = (cs != "");
+            boolean valid = !cs.equals("");
 
             return new GraphicsData(fileName, cs, time, valid);
+        }
+
+        protected String generateChecksum(String fileName) {
+            File f = new File(fileName);
+            return generateChecksum(f);
         }
 
         private String generateChecksum(File file) {
@@ -121,12 +120,16 @@ public class GraphicsDatabase {
 
             //Create byte array to read data in chunks
             byte[] byteArray = new byte[1024];
-            int bytesCount = 0;
+            int bytesCount;
 
             //Read file data and update in message digest
             while ((bytesCount = fis.read(byteArray)) != -1) {
                 digest.update(byteArray, 0, bytesCount);
             };
+
+            // also use filename inside digest to make it a primary key
+            byte[] fileNameBytes = file.getAbsolutePath().getBytes();
+            digest.update(fileNameBytes, 0, fileNameBytes.length);
 
             //close the stream; We don't need it now.
             fis.close();
@@ -153,7 +156,7 @@ public class GraphicsDatabase {
             try (Stream<Path> walk = Files.walk(Paths.get(pwd))) {
                 db = walk
                         .filter(Files::isRegularFile)
-                        .map(x -> x.toString())
+                        .map(Path::toString)
                         .filter(this::isImage)
                         .map(this::createGraphicsObject)
                         .filter(x -> x.isValid())
@@ -164,7 +167,6 @@ public class GraphicsDatabase {
 
             LOG.info("InitDbWorker scanned files: " + db.size());
             this.commitToDb();
-            LOG.info("Committed update image database to " + Configuration.DB_NAME);
         }
     }
 
@@ -181,7 +183,38 @@ public class GraphicsDatabase {
             } catch (Exception e) {
                 LOG.error("FATAL! Reusing the existing db failed! Delete it to fix the issue.");
                 e.printStackTrace();
+                return;
             }
+
+            // build up filetree for diffing
+            String pwd = (new File("")).getAbsolutePath();
+            Set<GraphicsData> currentGraphicsSet;
+
+            try (Stream<Path> walk = Files.walk(Paths.get(pwd))) {
+                currentGraphicsSet = walk
+                        .filter(Files::isRegularFile)
+                        .map(Path::toString)
+                        .filter(this::isImage)
+                        .map(this::createGraphicsObject)
+                        .filter(GraphicsData::isValid)
+                        .collect(Collectors.toSet());
+            } catch (IOException e) {
+                e.printStackTrace();
+                LOG.error("FATAL! Can't scan the current directory!");
+                return;
+            }
+
+            // added or updated files
+            Set<GraphicsData> recoveredGraphicsSet = new HashSet<GraphicsData>(db);
+
+            List<GraphicsData> newOrUpdatedGraphics = currentGraphicsSet.stream()
+                    .filter(x -> !recoveredGraphicsSet.contains(x))
+                    .collect(Collectors.toList());
+
+            // delete or changed
+            List<GraphicsData> deletedOrChangedGraphics = recoveredGraphicsSet.stream()
+                    .filter(x -> !currentGraphicsSet.contains(x))
+                    .collect(Collectors.toList());
         }
     }
 }

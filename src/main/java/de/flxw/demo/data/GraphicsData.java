@@ -3,9 +3,9 @@ package de.flxw.demo.data;
 import lombok.Getter;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class GraphicsData implements Serializable {
-
     @Getter private String fileName;
     @Getter private String checkSum;
     @Getter private String timeStamp;
@@ -22,7 +22,24 @@ public class GraphicsData implements Serializable {
     public String toString() {
         return fileName + "{checkSum='" + checkSum + '\'' +
                 ", timeStamp='" + timeStamp + '\'' +
-                ", valid=" + valid +
-                '}';
+                ", valid=" + valid + '}';
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj == null) {
+            return false;
+        } else if (obj instanceof GraphicsData) {
+            GraphicsData o = (GraphicsData) obj;
+            return o.getCheckSum().equals(getCheckSum());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(checkSum);
     }
 }
