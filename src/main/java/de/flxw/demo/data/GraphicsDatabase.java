@@ -26,6 +26,11 @@ import java.util.stream.Stream;
 
 @Repository
 public class GraphicsDatabase {
+    /*
+    * TODO
+    * use read-optimized HashMap for GraphicsData
+    * for dates use an intermediate map that maps a date to ids, and these ordered by time
+    * */
     protected List<GraphicsData> db;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
     private Thread dbWorker;
