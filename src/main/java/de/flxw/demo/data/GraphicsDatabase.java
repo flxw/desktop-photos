@@ -4,14 +4,13 @@ import com.drew.imaging.jpeg.JpegMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
+import de.flxw.demo.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,9 +25,6 @@ import java.util.stream.Stream;
 public class GraphicsDatabase {
     protected List<GraphicsData> db;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
-    private final String DB_NAME = "imagedb.java.serialized";
-    private final String[] supportedExtensions = {"png", "jpg"};
-
     private Thread dbWorker;
 
     public GraphicsDatabase() {
@@ -36,10 +32,12 @@ public class GraphicsDatabase {
 
     @PostConstruct
     public void init() {
-        File dbFile = new File(DB_NAME);
+        File dbFile = new File(Configuration.DB_NAME);
 
         if (dbFile.exists()) {
-            LOG.info("Reusing existing databases is not supported currently");
+            LOG.info("Reusing database files is not supported yet!");
+
+            //dbWorker = new ReuseDbWorker();
 
             // read db file
             // create diff filetree
@@ -51,36 +49,34 @@ public class GraphicsDatabase {
             dbWorker = new InitDbWorker();
             dbWorker.run();
         }
+
         /* spawn a thread here after the application has fully gone up.
            the thread should read in the DB file, and update its contents
            if the file did not exist, the thread should create it in the first place
          */
     }
 
-    private class InitDbWorker extends Thread {
-        public void run() {
-            String pwd = (new File("")).getAbsolutePath();
-
-            try (Stream<Path> walk = Files.walk(Paths.get(pwd))) {
-                db = walk
-                    .filter(Files::isRegularFile)
-                    .map(x -> x.toString())
-                    .filter(this::isImage)
-                    .map(this::createGraphicsObject)
-                    .filter(x -> x.isValid())
-                    .collect(Collectors.toList());
+    private abstract class DbWorker extends Thread {
+        public void commitToDb() {
+            try {
+                FileOutputStream fos = new FileOutputStream(Configuration.DB_NAME);
+                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                oos.writeObject(db);
+                oos.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.error("Could not save the database to location " + Configuration.DB_NAME);
             }
-
-            LOG.info("InitDbWorker scanned files: " + db.size());
         }
 
-        private boolean isImage(String fileName) {
-            return Arrays.stream(supportedExtensions).anyMatch(entry -> fileName.endsWith(entry));
+
+
+        protected boolean isImage(String fileName) {
+            return Arrays
+                    .stream(Configuration.SUPPORTED_EXTENSIONS)
+                    .anyMatch(entry -> fileName.endsWith(entry));
         }
 
-        private GraphicsData createGraphicsObject(String fileName) {
+        protected GraphicsData createGraphicsObject(String fileName) {
             File f = new File(fileName);
 
             String cs = generateChecksum(f);
@@ -147,6 +143,28 @@ public class GraphicsDatabase {
 
             //return complete hash
             return sb.toString();
+        }
+    }
+
+    private class InitDbWorker extends DbWorker {
+        public void run() {
+            String pwd = (new File("")).getAbsolutePath();
+
+            try (Stream<Path> walk = Files.walk(Paths.get(pwd))) {
+                db = walk
+                        .filter(Files::isRegularFile)
+                        .map(x -> x.toString())
+                        .filter(this::isImage)
+                        .map(this::createGraphicsObject)
+                        .filter(x -> x.isValid())
+                        .collect(Collectors.toList());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            LOG.info("InitDbWorker scanned files: " + db.size());
+            this.commitToDb();
+            LOG.info("Committed update image database to " + Configuration.DB_NAME);
         }
     }
 }
