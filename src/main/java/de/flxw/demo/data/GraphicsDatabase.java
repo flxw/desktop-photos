@@ -25,14 +25,6 @@ import java.util.stream.Stream;
 
 @Repository
 public class GraphicsDatabase {
-    /*
-    * TODO
-    * use read-optimized HashMap for GraphicsData
-    * for dates use an intermediate map that maps a date to ids, and these ordered by time
-    * id should only be the filename
-    * hash should only be used to check whether image was updated - maybe not needed, simply update file on change event?!
-    *  ==> update = delete and add anew
-    * */
     protected Map<String, GraphicsData> db;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
     private Thread dbWorker;
@@ -212,23 +204,27 @@ public class GraphicsDatabase {
 
             Set<String> recoveredGraphicsNames = db.keySet();
 
-            removeOldEntriesFromDb(currentFilenames, recoveredGraphicsNames);
-            addNewEntriesToDb(currentFilenames, recoveredGraphicsNames);
+            int nChanged = 0;
+            nChanged  = removeOldEntriesFromDb(currentFilenames, recoveredGraphicsNames);
+            nChanged += addNewEntriesToDb(currentFilenames, recoveredGraphicsNames);
 
+            if (nChanged > 0) commitToDb();
 
             long endTime = System.currentTimeMillis();
             LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
         }
 
-        private void removeOldEntriesFromDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {
+        private int removeOldEntriesFromDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {
             List<String> toBeRemoved = recoveredFilenames.stream()
                     .filter(x -> !currentFilenames.contains(x))
                     .collect(Collectors.toList());
 
             db.keySet().removeAll(toBeRemoved);
+
+            return toBeRemoved.size();
         }
 
-        private void addNewEntriesToDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {
+        private int addNewEntriesToDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {
             Map<String, GraphicsData> toBeAdded = currentFilenames.stream()
                     .filter(x -> !recoveredFilenames.contains(x))
                     .map(this::createGraphicsObject)
@@ -238,6 +234,8 @@ public class GraphicsDatabase {
                     ));
 
             db.putAll(toBeAdded);
+
+            return toBeAdded.size();
         }
     }
 }
