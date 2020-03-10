@@ -17,10 +17,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,7 +33,7 @@ public class GraphicsDatabase {
     * hash should only be used to check whether image was updated - maybe not needed, simply update file on change event?!
     *  ==> update = delete and add anew
     * */
-    protected List<GraphicsData> db;
+    protected Map<String, GraphicsData> db;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
     private Thread dbWorker;
 
@@ -152,6 +151,7 @@ public class GraphicsDatabase {
 
     private class InitDbWorker extends DbWorker {
         public void run() {
+            long startTime = System.currentTimeMillis();
             String pwd = (new File("")).getAbsolutePath();
 
             try (Stream<Path> walk = Files.walk(Paths.get(pwd))) {
@@ -161,23 +161,30 @@ public class GraphicsDatabase {
                         .filter(this::isImage)
                         .map(this::createGraphicsObject)
                         .filter(x -> x.isValid())
-                        .collect(Collectors.toList());
+                        .collect(Collectors.toMap(
+                                GraphicsData::getFileName,
+                                Function.identity()
+                        ));
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            LOG.info("InitDbWorker scanned files: " + db.size());
             this.commitToDb();
+            long endTime = System.currentTimeMillis();
+
+            LOG.info("InitDbWorker scanned files: " + db.size());
+            LOG.info("Database initialization took " + (endTime - startTime) + "ms");
         }
     }
 
     private class ReuseDbWorker extends DbWorker {
         public void run() {
+            long startTime = System.currentTimeMillis();
             FileInputStream fis = null;
             try {
                 fis = new FileInputStream(Configuration.DB_NAME);
                 ObjectInputStream ois = new ObjectInputStream(fis);
-                db = (List<GraphicsData>) ois.readObject();
+                db = (Map<String, GraphicsData>) ois.readObject();
 
                 ois.close();
                 commitToDb();
@@ -189,15 +196,13 @@ public class GraphicsDatabase {
 
             // build up filetree for diffing
             String pwd = (new File("")).getAbsolutePath();
-            Set<GraphicsData> currentGraphicsSet;
+            Set<String> currentFilenames;
 
             try (Stream<Path> walk = Files.walk(Paths.get(pwd))) {
-                currentGraphicsSet = walk
+                currentFilenames = walk
                         .filter(Files::isRegularFile)
                         .map(Path::toString)
                         .filter(this::isImage)
-                        .map(this::createGraphicsObject)
-                        .filter(GraphicsData::isValid)
                         .collect(Collectors.toSet());
             } catch (IOException e) {
                 e.printStackTrace();
@@ -205,17 +210,34 @@ public class GraphicsDatabase {
                 return;
             }
 
-            // added or updated files
-            Set<GraphicsData> recoveredGraphicsSet = new HashSet<GraphicsData>(db);
+            Set<String> recoveredGraphicsNames = db.keySet();
 
-            List<GraphicsData> newOrUpdatedGraphics = currentGraphicsSet.stream()
-                    .filter(x -> !recoveredGraphicsSet.contains(x))
+            removeOldEntriesFromDb(currentFilenames, recoveredGraphicsNames);
+            addNewEntriesToDb(currentFilenames, recoveredGraphicsNames);
+
+
+            long endTime = System.currentTimeMillis();
+            LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
+        }
+
+        private void removeOldEntriesFromDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {
+            List<String> toBeRemoved = recoveredFilenames.stream()
+                    .filter(x -> !currentFilenames.contains(x))
                     .collect(Collectors.toList());
 
-            // delete or changed
-            List<GraphicsData> deletedOrChangedGraphics = recoveredGraphicsSet.stream()
-                    .filter(x -> !currentGraphicsSet.contains(x))
-                    .collect(Collectors.toList());
+            db.keySet().removeAll(toBeRemoved);
+        }
+
+        private void addNewEntriesToDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {
+            Map<String, GraphicsData> toBeAdded = currentFilenames.stream()
+                    .filter(x -> !recoveredFilenames.contains(x))
+                    .map(this::createGraphicsObject)
+                    .collect(Collectors.toMap(
+                            GraphicsData::getFileName,
+                            Function.identity()
+                    ));
+
+            db.putAll(toBeAdded);
         }
     }
 }
