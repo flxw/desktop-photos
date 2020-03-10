@@ -3,15 +3,16 @@ package de.flxw.demo.data;
 import lombok.Getter;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Objects;
 
 public class GraphicsData implements Serializable {
     @Getter private String fileName;
     @Getter private String checkSum;
-    @Getter private String timeStamp;
+    @Getter private Date timeStamp;
     @Getter private boolean valid;
 
-    public GraphicsData(String fileName, String checkSum, String timeStamp, boolean valid) {
+    public GraphicsData(String fileName, String checkSum, Date timeStamp, boolean valid) {
         this.fileName = fileName;
         this.checkSum = checkSum;
         this.timeStamp = timeStamp;

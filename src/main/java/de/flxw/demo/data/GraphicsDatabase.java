@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
@@ -26,6 +27,7 @@ import java.util.stream.Stream;
 @Repository
 public class GraphicsDatabase {
     protected Map<String, GraphicsData> db;
+    protected SortedMap<Date, List<String>> dateToIdMap;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
     private Thread dbWorker;
 
@@ -70,7 +72,7 @@ public class GraphicsDatabase {
             File f = new File(fileName);
 
             String cs = generateChecksum(f);
-            String time = extractTimeTaken(f);
+            Date time = extractTimeTaken(f);
             boolean valid = !cs.equals("");
 
             return new GraphicsData(fileName, cs, time, valid);
@@ -94,19 +96,19 @@ public class GraphicsDatabase {
             return cs;
         }
 
-        private String extractTimeTaken(File file) {
+        private Date extractTimeTaken(File file) {
             try {
                 Metadata mt = JpegMetadataReader.readMetadata(file);
                 Directory exif = mt.getFirstDirectoryOfType(ExifIFD0Directory.class);
-                return exif.getString(ExifIFD0Directory.TAG_DATETIME);
+                String s = exif.getString(ExifIFD0Directory.TAG_DATETIME);
+                SimpleDateFormat exifDateParser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+                Date d = exifDateParser.parse(s);
+                return d;
             } catch (Exception e) {
-            }
-
-            try {
                 BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-                return attr.creationTime().toString();
-            } catch (Exception ex) {
-                return "";
+                return new Date(attr.creationTime().toMillis());
+            } finally {
+                return new Date(0,0,0);
             }
         }
 
@@ -173,13 +175,13 @@ public class GraphicsDatabase {
         public void run() {
             long startTime = System.currentTimeMillis();
             FileInputStream fis = null;
+
             try {
                 fis = new FileInputStream(Configuration.DB_NAME);
                 ObjectInputStream ois = new ObjectInputStream(fis);
                 db = (Map<String, GraphicsData>) ois.readObject();
 
                 ois.close();
-                commitToDb();
             } catch (Exception e) {
                 LOG.error("FATAL! Reusing the existing db failed! Delete it to fix the issue.");
                 e.printStackTrace();
