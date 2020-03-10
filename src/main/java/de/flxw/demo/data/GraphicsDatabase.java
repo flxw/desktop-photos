@@ -46,11 +46,10 @@ public class GraphicsDatabase {
         File dbFile = new File(Configuration.DB_NAME);
 
         if (dbFile.exists()) {
-            LOG.info("Found a database file, updating and reusing it");
-
+            LOG.info("Found a database file - updating and reusing it");
             dbWorker = new ReuseDbWorker();
         } else {
-            LOG.info("No database found, populating and creating a new one");
+            LOG.info("No database found - populating and creating a new one");
             dbWorker = new InitDbWorker();
         }
 
@@ -69,8 +68,6 @@ public class GraphicsDatabase {
                 LOG.error("Could not save the database to location " + Configuration.DB_NAME);
             }
         }
-
-
 
         protected boolean isImage(String fileName) {
             return Arrays
@@ -134,10 +131,6 @@ public class GraphicsDatabase {
             while ((bytesCount = fis.read(byteArray)) != -1) {
                 digest.update(byteArray, 0, bytesCount);
             };
-
-            // also use filename inside digest to make it a primary key
-            byte[] fileNameBytes = file.getAbsolutePath().getBytes();
-            digest.update(fileNameBytes, 0, fileNameBytes.length);
 
             //close the stream; We don't need it now.
             fis.close();

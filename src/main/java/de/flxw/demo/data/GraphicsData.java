@@ -33,13 +33,13 @@ public class GraphicsData implements Serializable {
             return false;
         } else if (obj instanceof GraphicsData) {
             GraphicsData o = (GraphicsData) obj;
-            return o.getCheckSum().equals(getCheckSum());
+            return o.getCheckSum().equals(checkSum) && o.getFileName().equals(fileName);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(checkSum);
+        return Objects.hash(fileName);
     }
 }
