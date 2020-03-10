@@ -30,6 +30,9 @@ public class GraphicsDatabase {
     * TODO
     * use read-optimized HashMap for GraphicsData
     * for dates use an intermediate map that maps a date to ids, and these ordered by time
+    * id should only be the filename
+    * hash should only be used to check whether image was updated - maybe not needed, simply update file on change event?!
+    *  ==> update = delete and add anew
     * */
     protected List<GraphicsData> db;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
