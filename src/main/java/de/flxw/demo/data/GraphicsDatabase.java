@@ -78,11 +78,6 @@ public class GraphicsDatabase {
             return new GraphicsData(fileName, cs, time, valid);
         }
 
-        protected String generateChecksum(String fileName) {
-            File f = new File(fileName);
-            return generateChecksum(f);
-        }
-
         private String generateChecksum(File file) {
             String cs;
 
