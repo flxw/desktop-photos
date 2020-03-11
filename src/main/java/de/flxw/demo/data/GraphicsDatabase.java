@@ -5,6 +5,7 @@ import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import de.flxw.demo.Configuration;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
 @Repository
 public class GraphicsDatabase {
     protected Map<String, GraphicsData> db;
-    protected SortedMap<Date, List<String>> dateToIdMap;
+    @Getter protected SortedMap<Date, List<String>> timelineMap;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
     private Thread dbWorker;
 
@@ -59,6 +60,23 @@ public class GraphicsDatabase {
                 LOG.info("Committed update image database to " + Configuration.DB_NAME);
             } catch (IOException e) {
                 LOG.error("Could not save the database to location " + Configuration.DB_NAME);
+            }
+        }
+
+        public void constructTimeline() {
+            timelineMap = new TreeMap<Date, List<String>>(Collections.reverseOrder());
+
+            for (GraphicsData gd : db.values()) {
+                Date key = gd.getDate();
+
+                if(timelineMap.containsKey(key)){
+                    List<String> l = timelineMap.get(key);
+                    l.add(gd.getFileName());
+                } else {
+                    List<String> l = new ArrayList<String>();
+                    l.add(gd.getFileName());
+                    timelineMap.put(gd.getDate(), l);
+                }
             }
         }
 
@@ -99,12 +117,14 @@ public class GraphicsDatabase {
                 SimpleDateFormat exifDateParser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
                 Date d = exifDateParser.parse(s);
                 return d;
-            } catch (Exception e) {
+            } catch (Exception e) {}
+
+            try {
                 BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
                 return new Date(attr.creationTime().toMillis());
-            } finally {
-                return new Date(0,0,0);
-            }
+            } catch (Exception e) {}
+
+            return new Date(0,0,0);
         }
 
         private String getFileChecksum(MessageDigest digest, File file) throws IOException {
@@ -159,6 +179,8 @@ public class GraphicsDatabase {
             }
 
             this.commitToDb();
+            this.constructTimeline();
+
             long endTime = System.currentTimeMillis();
 
             LOG.info("InitDbWorker scanned files: " + db.size());
@@ -209,6 +231,8 @@ public class GraphicsDatabase {
 
             long endTime = System.currentTimeMillis();
             LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
+
+            constructTimeline();
         }
 
         private int removeOldEntriesFromDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {

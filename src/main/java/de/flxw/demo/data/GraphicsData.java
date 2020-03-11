@@ -3,6 +3,8 @@ package de.flxw.demo.data;
 import lombok.Getter;
 
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Objects;
 
@@ -17,6 +19,11 @@ public class GraphicsData implements Serializable {
         this.checkSum = checkSum;
         this.timeStamp = timeStamp;
         this.valid = valid;
+    }
+
+    public Date getDate() {
+        Instant i = this.timeStamp.toInstant().truncatedTo(ChronoUnit.DAYS);
+        return Date.from(i);
     }
 
     @Override
