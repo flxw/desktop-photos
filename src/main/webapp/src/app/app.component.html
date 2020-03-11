@@ -1,0 +1,4 @@
+<div *ngFor="let dm of graphicsDb | keyvalue">
+    <h1>{{dm.key}}</h1>
+    <p *ngFor="let file of dm.value">{{file}}</p>
+</div>
