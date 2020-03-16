@@ -3,8 +3,8 @@
         <h1>{{dm.key}}</h1>
 
         <div fxLayout='row wrap'>
-            <div fxFlex="33" class="field" *ngFor="let value of dm.value">
-                {{value}}
+            <div fxFlex="33%" class="field" *ngFor="let value of dm.value">
+                <img src="http://localhost:8080/graphics?id={{ value }}"/>
             </div>
         </div>
     </div>
