@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
-import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -228,11 +227,10 @@ public class GraphicsDatabase {
             nChanged += addNewEntriesToDb(currentFilenames, recoveredGraphicsNames);
 
             if (nChanged > 0) commitToDb();
+            constructTimeline();
 
             long endTime = System.currentTimeMillis();
             LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
-
-            constructTimeline();
         }
 
         private int removeOldEntriesFromDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {
