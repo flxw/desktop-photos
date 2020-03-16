@@ -1,4 +1,11 @@
-<div *ngFor="let dm of graphicsDb | keyvalue">
-    <h1>{{dm.key}}</h1>
-    <p *ngFor="let file of dm.value">{{file}}</p>
-</div>
+<cdk-virtual-scroll-viewport itemSize="dm.size">
+    <div *cdkVirtualFor="let dm of graphicsDb | keyvalue">
+        <h1>{{dm.key}}</h1>
+
+        <div fxLayout='row wrap'>
+            <div fxFlex="33" class="field" *ngFor="let value of dm.value">
+                {{value}}
+            </div>
+        </div>
+    </div>
+</cdk-virtual-scroll-viewport>
