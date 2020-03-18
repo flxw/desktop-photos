@@ -1,0 +1,13 @@
+// to avoid content reflow, a size needs to be set: https://css-tricks.com/preventing-content-reflow-from-lazy-loaded-images/
+div, img
+    height 400px
+    width: 800px
+
+img.ng-lazyloaded
+    animation: fadein .5s;
+
+    @keyframes fadein
+        from
+            opacity: 0
+        to
+            opacity 1
