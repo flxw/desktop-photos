@@ -4,7 +4,7 @@
 
         <div fxLayout='row wrap'>
             <div fxFlex="33%" class="field" *ngFor="let value of dm.value">
-                <img src="http://localhost:8080/graphics?id={{ value }}"/>
+                <app-lazy-loading-image src="http://localhost:8080/graphics?id={{ value }}"></app-lazy-loading-image>
             </div>
         </div>
     </div>
