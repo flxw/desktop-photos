@@ -5,6 +5,8 @@ import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.jpeg.JpegDirectory;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 
 import java.io.File;
@@ -21,13 +23,26 @@ import java.util.Date;
 import java.util.Objects;
 
 public class GraphicsData implements Serializable {
-    @Getter private String fileName;
-    @Getter private String checkSum;
-    @Getter private Date timeStamp = new Date(0,0,0);
-    @Getter private boolean valid;
-    private int height = 400;
-    private int width  = 800;
+    @Getter
+    private String fileName;
 
+    @Getter
+    private String checkSum;
+
+    @Getter
+    private boolean valid;
+
+    @Getter
+    private int height;
+
+    @Getter
+    private int width;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd@HH:mm:ss")
+    @Getter
+    private Date timeStamp;
+
+    @JsonIgnore
     public Date getDate() {
         Instant i = this.timeStamp.toInstant().truncatedTo(ChronoUnit.DAYS);
         return Date.from(i);
@@ -125,7 +140,7 @@ public class GraphicsData implements Serializable {
             return false;
         } else if (obj instanceof GraphicsData) {
             GraphicsData o = (GraphicsData) obj;
-            return o.getCheckSum().equals(checkSum) && o.getFileName().equals(fileName);
+            return o.checkSum.equals(checkSum) && o.fileName.equals(fileName);
         }
         return false;
     }

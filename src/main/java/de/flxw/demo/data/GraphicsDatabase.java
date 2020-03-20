@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 @Repository
 public class GraphicsDatabase {
     protected Map<String, GraphicsData> db;
-    @Getter protected SortedMap<Date, List<String>> timelineMap;
+    @Getter protected SortedMap<Date, List<GraphicsData>> timelineMap;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
     private Thread dbWorker;
 
@@ -55,17 +55,17 @@ public class GraphicsDatabase {
         }
 
         public void constructTimeline() {
-            timelineMap = new TreeMap<Date, List<String>>(Collections.reverseOrder());
+            timelineMap = new TreeMap<>(Collections.reverseOrder());
 
             for (GraphicsData gd : db.values()) {
                 Date key = gd.getDate();
 
                 if(timelineMap.containsKey(key)){
-                    List<String> l = timelineMap.get(key);
-                    l.add(gd.getFileName());
+                    List<GraphicsData> l = timelineMap.get(key);
+                    l.add(gd);
                 } else {
-                    List<String> l = new ArrayList<String>();
-                    l.add(gd.getFileName());
+                    List<GraphicsData> l = new ArrayList<>();
+                    l.add(gd);
                     timelineMap.put(gd.getDate(), l);
                 }
             }

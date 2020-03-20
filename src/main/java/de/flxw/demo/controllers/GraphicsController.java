@@ -1,5 +1,6 @@
 package de.flxw.demo.controllers;
 
+import de.flxw.demo.data.GraphicsData;
 import de.flxw.demo.data.GraphicsDatabase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -29,8 +30,8 @@ public class GraphicsController {
 
     @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/api/v1/timeline")
-    public Map<Date, List<String>> getTimeline() {
-        Map<Date, List<String>> t = graphicsDatabase.getTimelineMap();
+    public Map<Date, List<GraphicsData>> getTimeline() {
+        var t =  graphicsDatabase.getTimelineMap();
         return t;
     }
 
