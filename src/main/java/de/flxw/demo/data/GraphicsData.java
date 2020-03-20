@@ -4,11 +4,14 @@ import com.drew.imaging.jpeg.JpegMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
-import com.drew.metadata.jpeg.JpegDirectory;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -20,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Objects;
 
 public class GraphicsData implements Serializable {
@@ -55,7 +59,11 @@ public class GraphicsData implements Serializable {
         gd.fileName = fileName;
         gd.checkSum = generateChecksum(f);
         gd.valid = !gd.checkSum.equals("");
-        setPropertiesFromMetadata(f, gd);
+        gd.timeStamp = getTimestamp(f);
+
+        Dimension ds = getDimensions(f);
+        gd.width = (int) ds.getWidth();
+        gd.height = (int) ds.getHeight();
 
         return gd;
     }
@@ -73,7 +81,7 @@ public class GraphicsData implements Serializable {
         return cs;
     }
 
-    private static void setPropertiesFromMetadata(File file, GraphicsData graphicsData) {
+    private static Date getTimestamp(File file) {
         try {
             Metadata mt = JpegMetadataReader.readMetadata(file);
             Directory exif = mt.getFirstDirectoryOfType(ExifIFD0Directory.class);
@@ -81,18 +89,34 @@ public class GraphicsData implements Serializable {
             // extract time when the picture was taken
             String s = exif.getString(ExifIFD0Directory.TAG_DATETIME);
             SimpleDateFormat exifDateParser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
-            graphicsData.timeStamp = exifDateParser.parse(s);
-
-            // extract image dimensions
-            Directory jpeg = mt.getFirstDirectoryOfType(JpegDirectory.class);
-            graphicsData.height = jpeg.getInt(JpegDirectory.TAG_IMAGE_HEIGHT);
-            graphicsData.width  = jpeg.getInt(JpegDirectory.TAG_IMAGE_WIDTH);
+            return exifDateParser.parse(s);
         } catch (Exception e) {}
 
         try {
             BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-            graphicsData.timeStamp = new Date(attr.creationTime().toMillis());
+            return new Date(attr.creationTime().toMillis());
         } catch (Exception e) {}
+
+        return new Date(0,0,0);
+    }
+
+    private static Dimension getDimensions(File file) {
+        try(ImageInputStream in = ImageIO.createImageInputStream(file)) {
+            final Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
+            if (readers.hasNext()) {
+                ImageReader reader = readers.next();
+                try {
+                    reader.setInput(in);
+                    return new Dimension(reader.getWidth(0), reader.getHeight(0));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    reader.dispose();
+                }
+            }
+        } catch (Exception e) { }
+
+        return new Dimension(1337, 1337);
     }
 
     private static String getFileChecksum(MessageDigest digest, File file) throws IOException {
