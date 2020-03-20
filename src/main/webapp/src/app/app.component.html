@@ -1,8 +1,8 @@
 <cdk-virtual-scroll-viewport itemSize="dm.size">
-    <div *cdkVirtualFor="let dm of timeline | keyvalue">
+    <div *cdkVirtualFor="let dm of timeline | keyvalue: asIsOrder">
         <h1>{{dm.key}}</h1>
 
-        <div fxLayout="row wrap" fxLayoutAlign="start center" >
+        <div fxLayout="row wrap" fxLayoutAlign="start center" fxLayoutGap="20px grid">
             <lazy-loading-image 
                 [metadata]="v"
                 *ngFor="let v of dm.value"

@@ -20,4 +20,8 @@ export class AppComponent implements OnInit{
         .getTimeline()
         .subscribe(tl => this.timeline = tl);
   }
+
+  asIsOrder(a, b) {
+    return 0;
+  }
 }
