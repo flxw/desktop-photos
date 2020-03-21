@@ -8,11 +8,13 @@ import {ScrollingModule} from '@angular/cdk/scrolling';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { LazyLoadImageModule } from 'ng-lazyload-image';
 import { LazyLoadingImageComponent } from './lazy-loading-image/lazy-loading-image.component';
+import { TimeScrollbarComponent } from './time-scrollbar/time-scrollbar.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    LazyLoadingImageComponent
+    LazyLoadingImageComponent,
+    TimeScrollbarComponent
   ],
   imports: [
     BrowserModule,

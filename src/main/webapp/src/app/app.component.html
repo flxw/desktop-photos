@@ -1,12 +1,15 @@
-<cdk-virtual-scroll-viewport itemSize="dm.size">
-    <div *cdkVirtualFor="let dm of timeline | keyvalue: asIsOrder">
-        <h1>{{dm.key}}</h1>
+<div>
+    <cdk-virtual-scroll-viewport itemSize="dm.size" (scroll)="setTopScroll($event)">
+        <div *cdkVirtualFor="let dm of timeline | keyvalue: asIsOrder">
+            <h1>{{dm.key}}</h1>
 
-        <div fxLayout="row wrap" fxLayoutAlign="start center" fxLayoutGap="20px grid">
-            <lazy-loading-image 
-                [metadata]="v"
-                *ngFor="let v of dm.value"
-            ></lazy-loading-image>
+            <div fxLayout="row wrap" fxLayoutAlign="start center" fxLayoutGap="20px grid">
+                <lazy-loading-image 
+                    [metadata]="v"
+                    *ngFor="let v of dm.value"
+                ></lazy-loading-image>
+            </div>
         </div>
-    </div>
-</cdk-virtual-scroll-viewport>
+    </cdk-virtual-scroll-viewport>
+    <time-scrollbar [currentScrollProperties]="scrollEventProperties"></time-scrollbar>
+</div>
