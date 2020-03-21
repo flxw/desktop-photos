@@ -10,7 +10,7 @@ export class LazyLoadingImageComponent implements OnInit {
     @Input() metadata : GraphicsData;
 
     @HostBinding("style.--width") width:number = 0;
-    @HostBinding("style.--height") height:number = 400;
+    @HostBinding("style.--height") height:number = 300;
 
     defaultImage = 'https://www.placecage.com/1000/1000';
     url = "";
@@ -23,6 +23,6 @@ export class LazyLoadingImageComponent implements OnInit {
             this.width = 600;
         }
 
-        this.url = "http://localhost:8080/graphics?id=" + this.metadata.fileName;
+        this.url = "http://localhost:8080/graphics?id=" + this.metadata.id;
     }
 }

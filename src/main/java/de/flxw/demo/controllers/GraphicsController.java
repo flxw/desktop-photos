@@ -31,13 +31,13 @@ public class GraphicsController {
     @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/api/v1/timeline")
     public Map<Date, List<GraphicsData>> getTimeline() {
-        var t =  graphicsDatabase.getTimelineMap();
-        return t;
+        return graphicsDatabase.getTimelineMap();
     }
 
     @GetMapping("/graphics")
-    public ResponseEntity<byte[]> getImage(@RequestParam String id) throws IOException {
-        File imgFile = new File(id);
+    public ResponseEntity<byte[]> getImage(@RequestParam Long id) throws IOException {
+        String fileName = graphicsDatabase.getById(id).getFileName();
+        File imgFile = new File(fileName);
         InputStream targetStream = new FileInputStream(imgFile);
         byte[] bytes = StreamUtils.copyToByteArray(targetStream);
 

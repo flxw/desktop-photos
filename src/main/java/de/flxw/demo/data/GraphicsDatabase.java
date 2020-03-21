@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 
 @Repository
 public class GraphicsDatabase {
-    protected Map<String, GraphicsData> db;
+    protected Map<Long, GraphicsData> db;
     @Getter protected SortedMap<Date, List<GraphicsData>> timelineMap;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
     private Thread dbWorker;
@@ -41,6 +41,10 @@ public class GraphicsDatabase {
         dbWorker.start();
     }
 
+    public GraphicsData getById(final long id) {
+        return this.db.get(id);
+    }
+
     private abstract class DbWorker extends Thread {
         public void commitToDb() {
             try {
@@ -48,9 +52,9 @@ public class GraphicsDatabase {
                 ObjectOutputStream oos = new ObjectOutputStream(fos);
                 oos.writeObject(db);
                 oos.close();
-                LOG.info("Committed update image database to " + Configuration.DB_NAME);
+                LOG.info("Committed update database to " + Configuration.DB_NAME);
             } catch (IOException e) {
-                LOG.error("Could not save the database to location " + Configuration.DB_NAME);
+                LOG.error("Could not save database to " + Configuration.DB_NAME);
             }
         }
 
@@ -74,7 +78,7 @@ public class GraphicsDatabase {
         protected boolean isImage(String fileName) {
             return Arrays
                     .stream(Configuration.SUPPORTED_EXTENSIONS)
-                    .anyMatch(entry -> fileName.endsWith(entry));
+                    .anyMatch(entry -> fileName.toLowerCase().endsWith(entry));
         }
     }
 
@@ -89,9 +93,8 @@ public class GraphicsDatabase {
                         .map(Path::toString)
                         .filter(this::isImage)
                         .map(GraphicsData::of)
-                        .filter(x -> x.isValid())
                         .collect(Collectors.toMap(
-                                GraphicsData::getFileName,
+                                GraphicsData::getId,
                                 Function.identity()
                         ));
             } catch (IOException e) {
@@ -116,7 +119,7 @@ public class GraphicsDatabase {
             try {
                 fis = new FileInputStream(Configuration.DB_NAME);
                 ObjectInputStream ois = new ObjectInputStream(fis);
-                db = (Map<String, GraphicsData>) ois.readObject();
+                db = (Map<Long, GraphicsData>) ois.readObject();
 
                 ois.close();
             } catch (Exception e) {
@@ -127,25 +130,26 @@ public class GraphicsDatabase {
 
             // build up filetree for diffing
             String pwd = (new File("")).getAbsolutePath();
-            Set<String> currentFilenames;
+            Map<Long, String> currentIdNameMapping;
 
             try (Stream<Path> walk = Files.walk(Paths.get(pwd))) {
-                currentFilenames = walk
+                currentIdNameMapping = walk
                         .filter(Files::isRegularFile)
                         .map(Path::toString)
                         .filter(this::isImage)
-                        .collect(Collectors.toSet());
+                        .collect(Collectors.toMap(GraphicsData::getId, Function.identity()));
             } catch (IOException e) {
                 e.printStackTrace();
                 LOG.error("FATAL! Can't scan the current directory!");
                 return;
             }
 
-            Set<String> recoveredGraphicsNames = db.keySet();
+            Set<Long> recoveredGraphicsIds = db.keySet();
+            Set<Long> currentGraphicsIds = currentIdNameMapping.keySet();
 
             int nChanged = 0;
-            nChanged  = removeOldEntriesFromDb(currentFilenames, recoveredGraphicsNames);
-            nChanged += addNewEntriesToDb(currentFilenames, recoveredGraphicsNames);
+            nChanged  = removeOldEntriesFromDb(currentGraphicsIds, recoveredGraphicsIds);
+            nChanged += addNewEntriesToDb(currentGraphicsIds, recoveredGraphicsIds, currentIdNameMapping);
 
             if (nChanged > 0) commitToDb();
             constructTimeline();
@@ -154,9 +158,9 @@ public class GraphicsDatabase {
             LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
         }
 
-        private int removeOldEntriesFromDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {
-            List<String> toBeRemoved = recoveredFilenames.stream()
-                    .filter(x -> !currentFilenames.contains(x))
+        private int removeOldEntriesFromDb(final Set<Long> current, final Set<Long> recovered) {
+            List<Long> toBeRemoved = recovered.stream()
+                    .filter(x -> !current.contains(x))
                     .collect(Collectors.toList());
 
             db.keySet().removeAll(toBeRemoved);
@@ -164,12 +168,13 @@ public class GraphicsDatabase {
             return toBeRemoved.size();
         }
 
-        private int addNewEntriesToDb(final Set<String> currentFilenames, final Set<String> recoveredFilenames) {
-            Map<String, GraphicsData> toBeAdded = currentFilenames.stream()
-                    .filter(x -> !recoveredFilenames.contains(x))
+        private int addNewEntriesToDb(final Set<Long> current, final Set<Long> recovered, final Map<Long, String> mapping) {
+            Map<Long, GraphicsData> toBeAdded = current.stream()
+                    .filter(x -> !recovered.contains(x))
+                    .map(mapping::get)
                     .map(GraphicsData::of)
                     .collect(Collectors.toMap(
-                            GraphicsData::getFileName,
+                            GraphicsData::getId,
                             Function.identity()
                     ));
 
