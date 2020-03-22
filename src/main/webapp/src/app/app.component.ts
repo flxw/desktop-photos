@@ -1,12 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, AfterViewChecked } from '@angular/core';
 import { GraphicsService } from './graphics.service';
+import { TimePortService } from './time-port.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.styl']
 })
-export class AppComponent implements OnInit{
+export class AppComponent implements OnInit, AfterViewChecked {
+  @ViewChild("body") body;
   timeline: Map<Date, any>;
   anchorRenderDates:string[] = [];
   scrollEventProperties: any = {
@@ -14,11 +16,17 @@ export class AppComponent implements OnInit{
     scrollHeight : 0
   };
 
-  constructor(public gs: GraphicsService) {
+  constructor(public gs: GraphicsService, public tp: TimePortService) {
   }
 
   ngOnInit() {
     this.populateTimeline();
+  }
+
+  ngAfterViewChecked() {
+    let bh = this.body.nativeElement.firstChild.firstChild.clientHeight;
+    
+    if (bh != 0) this.tp.setBodyHeight(bh);
   }
 
   populateTimeline() {

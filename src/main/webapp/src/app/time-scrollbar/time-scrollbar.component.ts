@@ -1,4 +1,4 @@
-import { Component, OnChanges, Input, SimpleChanges, OnInit, ViewChild, AfterViewChecked } from '@angular/core';
+import { Component, OnChanges, Input, SimpleChanges } from '@angular/core';
 import { TimePortService } from '../time-port.service'
 
 
@@ -9,20 +9,12 @@ import { TimePortService } from '../time-port.service'
 })
 export class TimeScrollbarComponent implements OnChanges {
   @Input() currentScrollProperties:object;
-  @ViewChild("body") body;
   scrollPosition : number;
-  bodyHeight: number = 0;
 
   constructor(public tp:TimePortService) {}
 
-  calculateRelativePosition(absoluteTopOffset:number):number {
-    return absoluteTopOffset/this.bodyHeight * 100;
-  }
-
   ngOnChanges(changes: SimpleChanges) {
     let st = changes.currentScrollProperties.currentValue.scrollTop;
-    this.bodyHeight = changes.currentScrollProperties.currentValue.scrollHeight;
-
-    this.scrollPosition = st / this.bodyHeight * 100;
+    this.scrollPosition = st / this.tp.getBodyHeight() * 100;
   }
 }

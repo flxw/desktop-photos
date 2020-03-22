@@ -6,6 +6,8 @@ import { Injectable } from '@angular/core';
 export class TimePortService {
   private registeredIds: string[] = [];
   private idToAnchorMapping = {};
+  private bodyHeight = 1;
+
   constructor() { }
 
   private getUniqueId(parts: number): string {
@@ -40,5 +42,17 @@ export class TimePortService {
 
   public getAnchorList():object[] {
     return Object.values(this.idToAnchorMapping);
+  }
+
+  public setBodyHeight(h:number):void {
+    this.bodyHeight = h;
+  }
+
+  public getBodyHeight():number {
+    return this.bodyHeight;
+  }
+
+  public calculateRelativePosition(absoluteTopOffset:number):number {
+    return absoluteTopOffset/this.bodyHeight * 100;
   }
 }

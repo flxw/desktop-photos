@@ -1,4 +1,4 @@
-<div>
+<div #body>
     <cdk-virtual-scroll-viewport itemSize="dm.size" (scroll)="setTopScroll($event)">
         <div class="date-block" *cdkVirtualFor="let dm of timeline | keyvalue: asIsOrder">
             <h1>{{dm.key | date:'fullDate'}}</h1>
