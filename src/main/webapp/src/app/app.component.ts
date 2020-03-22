@@ -8,12 +8,14 @@ import { GraphicsService } from './graphics.service';
 })
 export class AppComponent implements OnInit{
   timeline: Map<Date, any>;
+  anchorRenderDates:string[] = [];
   scrollEventProperties: any = {
     scrollTop : 0,
     scrollHeight : 0
   };
 
-  constructor(public gs: GraphicsService) {}
+  constructor(public gs: GraphicsService) {
+  }
 
   ngOnInit() {
     this.populateTimeline();
@@ -22,7 +24,7 @@ export class AppComponent implements OnInit{
   populateTimeline() {
     this.gs
         .getTimeline()
-        .subscribe(tl => this.timeline = tl);
+        .subscribe(tl => this.preProcessTimeline(tl));
   }
 
   asIsOrder(a, b) {
@@ -34,5 +36,25 @@ export class AppComponent implements OnInit{
       scrollTop: e.srcElement.scrollTop,
       scrollHeight: e.srcElement.scrollHeight
     };
+  }
+
+  preProcessTimeline(tl:Map<Date,any>):void {
+    this.timeline = tl;
+    let previous = null;
+
+    for (let date of Object.keys(tl)) {
+      let nDate = new Date(date);
+      let nDateString = nDate.getUTCMonth() + "/" + nDate.getUTCFullYear();
+      
+      if (previous != nDateString) {
+        this.anchorRenderDates.push(date);
+      }
+
+      previous = nDateString;
+    }
+  }
+
+  shouldBeRendered(dNow:string):boolean {
+    return this.anchorRenderDates.includes(dNow);
   }
 }
