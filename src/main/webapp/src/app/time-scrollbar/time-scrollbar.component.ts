@@ -15,6 +15,6 @@ export class TimeScrollbarComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     let st = changes.currentScrollProperties.currentValue.scrollTop;
-    this.scrollPosition = st / this.tp.getBodyHeight() * 100;
+    this.scrollPosition = this.tp.calculateScalePositionFromAbsolute(st)
   }
 }

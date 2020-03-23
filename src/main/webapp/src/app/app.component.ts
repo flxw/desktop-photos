@@ -15,6 +15,7 @@ export class AppComponent implements OnInit, AfterViewChecked {
     scrollTop : 0,
     scrollHeight : 0
   };
+  firstViewCheck:boolean = true;
 
   constructor(public gs: GraphicsService, public tp: TimePortService) {
   }
@@ -24,9 +25,11 @@ export class AppComponent implements OnInit, AfterViewChecked {
   }
 
   ngAfterViewChecked() {
-    let bh = this.body.nativeElement.firstChild.firstChild.clientHeight;
-    
-    if (bh != 0) this.tp.setBodyHeight(bh);
+    if (this.firstViewCheck) {
+      let ce = this.body.nativeElement.firstChild.firstChild;
+      this.tp.setContainerElement(ce);
+      this.firstViewCheck = false;
+    }
   }
 
   populateTimeline() {

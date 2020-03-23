@@ -1,7 +1,7 @@
 <div id="body" #body>
     <div id="currentPositionMarker" [style.top.%]="scrollPosition"></div>
     <div class="anchorMarker"
-        [style.top.%]="tp.calculateRelativePosition(am.top)"
+        [style.top.%]="tp.calculateScalePositionFromRelative(am.top)"
         *ngFor="let am of tp.getAnchorList()">
         {{ am.text }}
     </div>

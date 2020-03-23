@@ -9,18 +9,21 @@ import { TimePortService } from '../time-port.service'
 export class TimeScrollbarAnchorComponent implements AfterContentChecked, OnInit, OnDestroy {
   @Input() text: string;
   private id:string;
+  private oldTop:number;
 
   constructor(private el: ElementRef, private tp: TimePortService) { }
 
   ngAfterContentChecked() {
-    //let offsetTop = this.el.nativeElement.getBoundingClientRect().top;
-    //this.tp.upsertAnchor(this.id, this.text, offsetTop);
+    let offsetTop = this.el.nativeElement.getBoundingClientRect().top;
+    
+    if (offsetTop != this.oldTop) {
+      this.tp.upsertAnchor(this.id, this.text, offsetTop);
+      this.oldTop = offsetTop;
+    }
   }
 
   ngOnInit() {
     this.id = this.tp.registerId();
-    let offsetTop = this.el.nativeElement.getBoundingClientRect().top;
-    this.tp.upsertAnchor(this.id, this.text, offsetTop);
   }
 
   ngOnDestroy() {
