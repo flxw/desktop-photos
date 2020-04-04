@@ -28,13 +28,14 @@ public class GraphicsDatabase {
 
     @PostConstruct
     public void init() {
-        File dbFile = new File(Configuration.DB_NAME);
+        File dbFile = new File(Configuration.getDbLocation());
 
         if (dbFile.exists()) {
             LOG.info("Found a database file - updating and reusing it");
             dbWorker = new ReuseDbWorker();
         } else {
             LOG.info("No database found - populating and creating a new one");
+            Configuration.createAppDirIfNonExistent();
             dbWorker = new InitDbWorker();
         }
 
@@ -48,13 +49,13 @@ public class GraphicsDatabase {
     private abstract class DbWorker extends Thread {
         public void commitToDb() {
             try {
-                FileOutputStream fos = new FileOutputStream(Configuration.DB_NAME);
+                FileOutputStream fos = new FileOutputStream(Configuration.getDbLocation());
                 ObjectOutputStream oos = new ObjectOutputStream(fos);
                 oos.writeObject(db);
                 oos.close();
-                LOG.info("Committed update database to " + Configuration.DB_NAME);
+                LOG.info("Committed update database to " + Configuration.getDbLocation());
             } catch (IOException e) {
-                LOG.error("Could not save database to " + Configuration.DB_NAME);
+                LOG.error("Could not save database to " + Configuration.getDbLocation());
             }
         }
 
@@ -77,7 +78,7 @@ public class GraphicsDatabase {
 
         protected boolean isImage(String fileName) {
             return Arrays
-                    .stream(Configuration.SUPPORTED_EXTENSIONS)
+                    .stream(Configuration.getSupportedFileExtensions())
                     .anyMatch(entry -> fileName.toLowerCase().endsWith(entry));
         }
     }
@@ -117,7 +118,7 @@ public class GraphicsDatabase {
             FileInputStream fis = null;
 
             try {
-                fis = new FileInputStream(Configuration.DB_NAME);
+                fis = new FileInputStream(Configuration.getDbLocation());
                 ObjectInputStream ois = new ObjectInputStream(fis);
                 db = (Map<Long, GraphicsData>) ois.readObject();
 
@@ -162,6 +163,10 @@ public class GraphicsDatabase {
             List<Long> toBeRemoved = recovered.stream()
                     .filter(x -> !current.contains(x))
                     .collect(Collectors.toList());
+
+            for (Long graphicsId : toBeRemoved) {
+                db.get(graphicsId).cleanup();
+            }
 
             db.keySet().removeAll(toBeRemoved);
 

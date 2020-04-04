@@ -6,7 +6,9 @@ import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.flxw.demo.Configuration;
 import lombok.Getter;
+import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -16,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -48,6 +51,9 @@ public class GraphicsData implements Serializable {
         return Date.from(i);
     }
 
+    @JsonIgnore
+    private String thumbnailLocation;
+
     private GraphicsData() {};
 
     public static GraphicsData of(String fileName) {
@@ -61,6 +67,16 @@ public class GraphicsData implements Serializable {
         gd.width = (int) ds.getWidth();
         gd.height = (int) ds.getHeight();
         gd.size = f.length();
+
+        try {
+            String thumbFileName = Long.toString(gd.getId());
+            gd.thumbnailLocation = Paths.get(Configuration.getAppDir(), thumbFileName + ".png").toString();
+            File thumbnailFile = new File(gd.thumbnailLocation);
+            Thumbnails.of(f).size(200, 200).toFile(thumbnailFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         return gd;
     }
@@ -140,5 +156,10 @@ public class GraphicsData implements Serializable {
         File f = new File(fileName);
 
         return Objects.hash(fileName, f.length());
+    }
+
+    public void cleanup() {
+        File toBeDeleted = new File(this.thumbnailLocation);
+        toBeDeleted.delete();
     }
 }
