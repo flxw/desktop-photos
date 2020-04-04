@@ -13,7 +13,7 @@ export class TimeScrollbarComponent implements OnChanges {
 
   constructor(public tp:TimePortService) {}
 
-  ngOnChanges(changes: SimpleChanges) {
+  ngOnChanges(changes:SimpleChanges) {
     let st = changes.currentScrollProperties.currentValue.scrollTop;
     this.scrollPosition = this.tp.calculateScalePositionFromAbsolute(st)
   }

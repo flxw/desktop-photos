@@ -50,12 +50,13 @@ export class AppComponent implements OnInit, AfterViewChecked {
   }
 
   preProcessTimeline(tl:Map<Date,any>):void {
+    // acquire the newest dates in a year to place the anchor there
     this.timeline = tl;
     let previous = null;
 
-    for (let date of Object.keys(tl)) {
+    for (let date of Object.keys(tl).reverse()) {
       let nDate = new Date(date);
-      let nDateString = nDate.getUTCMonth() + "/" + nDate.getUTCFullYear();
+      let nDateString = String(nDate.getUTCFullYear());
       
       if (previous != nDateString) {
         this.anchorRenderDates.push(date);
