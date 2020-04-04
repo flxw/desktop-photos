@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public class Configuration {
     private static final String DB_NAME = "imagedb.java.serialized";
@@ -29,6 +30,10 @@ public class Configuration {
         boolean returnValue = false;
 
         if (dir.exists()) {
+            for(File file: Objects.requireNonNull(dir.listFiles())) {
+                if (!file.isDirectory()) file.delete();
+            }
+
             returnValue = false;
         } else {
             try {

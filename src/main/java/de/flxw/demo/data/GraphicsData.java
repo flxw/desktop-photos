@@ -51,7 +51,7 @@ public class GraphicsData implements Serializable {
         return Date.from(i);
     }
 
-    @JsonIgnore
+    @JsonIgnore  @Getter
     private String thumbnailLocation;
 
     private GraphicsData() {};

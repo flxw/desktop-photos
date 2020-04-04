@@ -11,6 +11,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -76,10 +77,14 @@ public class GraphicsDatabase {
             }
         }
 
-        protected boolean isImage(String fileName) {
-            return Arrays
+        protected boolean checkFileValidity(Path fileName, BasicFileAttributes attrs) {
+            boolean isAcceptedFile = Arrays
                     .stream(Configuration.getSupportedFileExtensions())
-                    .anyMatch(entry -> fileName.toLowerCase().endsWith(entry));
+                    .anyMatch((ext) -> fileName.toString().toLowerCase().endsWith(ext));
+
+            boolean isContainedInAppDirectory = fileName.toAbsolutePath().toString().contains(Configuration.getAppDir());
+
+            return isAcceptedFile && !isContainedInAppDirectory;
         }
     }
 
@@ -88,11 +93,11 @@ public class GraphicsDatabase {
             long startTime = System.currentTimeMillis();
             String pwd = (new File("")).getAbsolutePath();
 
-            try (Stream<Path> walk = Files.walk(Paths.get(pwd))) {
+            try {
+                Stream<Path> walk = Files.find(Paths.get(pwd), Integer.MAX_VALUE, this::checkFileValidity);
                 db = walk
                         .filter(Files::isRegularFile)
                         .map(Path::toString)
-                        .filter(this::isImage)
                         .map(GraphicsData::of)
                         .collect(Collectors.toMap(
                                 GraphicsData::getId,
@@ -115,7 +120,7 @@ public class GraphicsDatabase {
     private class ReuseDbWorker extends DbWorker {
         public void run() {
             long startTime = System.currentTimeMillis();
-            FileInputStream fis = null;
+            FileInputStream fis;
 
             try {
                 fis = new FileInputStream(Configuration.getDbLocation());
@@ -133,11 +138,11 @@ public class GraphicsDatabase {
             String pwd = (new File("")).getAbsolutePath();
             Map<Long, String> currentIdNameMapping;
 
-            try (Stream<Path> walk = Files.walk(Paths.get(pwd))) {
+            try {
+                Stream<Path> walk = Files.find(Paths.get(pwd), Integer.MAX_VALUE, this::checkFileValidity);
                 currentIdNameMapping = walk
                         .filter(Files::isRegularFile)
                         .map(Path::toString)
-                        .filter(this::isImage)
                         .collect(Collectors.toMap(GraphicsData::getId, Function.identity()));
             } catch (IOException e) {
                 e.printStackTrace();

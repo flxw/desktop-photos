@@ -36,7 +36,7 @@ public class GraphicsController {
 
     @GetMapping("/graphics")
     public ResponseEntity<byte[]> getImage(@RequestParam Long id) throws IOException {
-        String fileName = graphicsDatabase.getById(id).getFileName();
+        String fileName = graphicsDatabase.getById(id).getThumbnailLocation();
         File imgFile = new File(fileName);
         InputStream targetStream = new FileInputStream(imgFile);
         byte[] bytes = StreamUtils.copyToByteArray(targetStream);
