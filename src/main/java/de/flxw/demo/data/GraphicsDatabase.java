@@ -86,6 +86,16 @@ public class GraphicsDatabase {
 
             return isAcceptedFile && !isContainedInAppDirectory;
         }
+
+        public Map<Long, GraphicsData> createGraphicsMapFromPathstrings(List<String> pathList) {
+            return pathList
+                .parallelStream()
+                .map(GraphicsData::of)
+                .collect(Collectors.toMap(
+                        GraphicsData::getId,
+                        Function.identity()
+                ));
+        }
     }
 
     private class InitDbWorker extends DbWorker {
@@ -95,14 +105,12 @@ public class GraphicsDatabase {
 
             try {
                 Stream<Path> walk = Files.find(Paths.get(pwd), Integer.MAX_VALUE, this::checkFileValidity);
-                db = walk
+                List<String> validFiles = walk
                         .filter(Files::isRegularFile)
                         .map(Path::toString)
-                        .map(GraphicsData::of)
-                        .collect(Collectors.toMap(
-                                GraphicsData::getId,
-                                Function.identity()
-                        ));
+                        .collect(Collectors.toList());
+
+                db = createGraphicsMapFromPathstrings(validFiles);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -179,14 +187,11 @@ public class GraphicsDatabase {
         }
 
         private int addNewEntriesToDb(final Set<Long> current, final Set<Long> recovered, final Map<Long, String> mapping) {
-            Map<Long, GraphicsData> toBeAdded = current.stream()
-                    .filter(x -> !recovered.contains(x))
-                    .map(mapping::get)
-                    .map(GraphicsData::of)
-                    .collect(Collectors.toMap(
-                            GraphicsData::getId,
-                            Function.identity()
-                    ));
+            List<String> pathsOfObjectstoBeAdded = current.stream()
+                .filter(x -> !recovered.contains(x))
+                .map(mapping::get)
+                .collect(Collectors.toList());
+            Map<Long, GraphicsData> toBeAdded = createGraphicsMapFromPathstrings(pathsOfObjectstoBeAdded);
 
             db.putAll(toBeAdded);
 
