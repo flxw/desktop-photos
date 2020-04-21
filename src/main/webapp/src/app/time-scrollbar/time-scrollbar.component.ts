@@ -1,4 +1,4 @@
-import { Component, OnChanges, Input, SimpleChanges } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TimePortService } from '../time-port.service'
 
 
@@ -7,14 +7,6 @@ import { TimePortService } from '../time-port.service'
   templateUrl: './time-scrollbar.component.html',
   styleUrls: ['./time-scrollbar.component.styl']
 })
-export class TimeScrollbarComponent implements OnChanges {
-  @Input() currentScrollProperties:object;
-  scrollPosition : number;
-
+export class TimeScrollbarComponent {
   constructor(public tp:TimePortService) {}
-
-  ngOnChanges(changes:SimpleChanges) {
-    let st = changes.currentScrollProperties.currentValue.scrollTop;
-    this.scrollPosition = this.tp.calculateScalePositionFromAbsolute(st)
-  }
 }
