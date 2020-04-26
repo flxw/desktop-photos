@@ -1,9 +1,14 @@
 package de.flxw.demo.data;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
 import com.drew.imaging.jpeg.JpegMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
+import com.drew.metadata.Tag;
 import com.drew.metadata.exif.ExifIFD0Directory;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.flxw.demo.Configuration;
@@ -11,9 +16,7 @@ import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
-import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -58,21 +61,50 @@ public class GraphicsData implements Serializable {
 
     public static GraphicsData of(String fileName) {
         File f = new File(fileName);
+        BufferedImage bimg = null;
         GraphicsData gd = new GraphicsData();
+
+        try {
+            bimg = ImageIO.read(f);
+        } catch (IOException e) {
+            return null;
+        }
 
         gd.fileName = fileName;
         gd.timeStamp = getTimestamp(f);
-
-        Dimension ds = getDimensions(f);
-        gd.width = (int) ds.getWidth();
-        gd.height = (int) ds.getHeight();
         gd.size = f.length();
+        gd.width = (int) bimg.getWidth();
+        gd.height = (int) bimg.getHeight();
+
+        // account for image orientation in JPEG here
+        int rotation = 0;
+        boolean dimensionsFlipped = false;
+
+        if (fileName.toLowerCase().endsWith("jpg")) {
+            try {
+                dimensionsFlipped = shouldFlipDimensions(f);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (dimensionsFlipped) {
+            int x = gd.width;
+            gd.width = gd.height;
+            gd.height = x;
+            rotation = 90;
+        }
 
         try {
             String thumbFileName = Long.toString(gd.getId());
             gd.thumbnailLocation = Paths.get(Configuration.getAppDir(), thumbFileName + ".png").toString();
             File thumbnailFile = new File(gd.thumbnailLocation);
-            Thumbnails.of(f).size(200, 200).toFile(thumbnailFile);
+            Thumbnails
+                    .of(bimg)
+                    .rotate(rotation)
+                    .size(200, 200)
+                    .outputFormat("png")
+                    .toFile(thumbnailFile);
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
@@ -100,23 +132,21 @@ public class GraphicsData implements Serializable {
         return new Date(0,0,0);
     }
 
-    private static Dimension getDimensions(File file) {
-        try(ImageInputStream in = ImageIO.createImageInputStream(file)) {
-            final Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
-            if (readers.hasNext()) {
-                ImageReader reader = readers.next();
-                try {
-                    reader.setInput(in);
-                    return new Dimension(reader.getWidth(0), reader.getHeight(0));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    reader.dispose();
+    private static boolean shouldFlipDimensions(File f) throws ImageProcessingException, IOException, MetadataException {
+        Metadata metadata = ImageMetadataReader.readMetadata(f);
+        Iterator<Directory> directoryIterator = metadata.getDirectories().iterator();
+
+        for (Directory directory = directoryIterator.next();
+             directoryIterator.hasNext();
+             directory = directoryIterator.next()) {
+            for (Tag tag : directory.getTags()) {
+                if (tag.getTagName().equals("Orientation")) {
+                    return directory.getInt(ExifSubIFDDirectory.TAG_ORIENTATION) >= 4;
                 }
             }
-        } catch (Exception e) { }
+        }
 
-        return new Dimension(1337, 1337);
+        return false;
     }
 
     @Override
