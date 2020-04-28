@@ -29,7 +29,7 @@ public class GraphicsDatabase {
 
     @PostConstruct
     public void init() {
-        File dbFile = new File(Configuration.getDbLocation());
+        /*File dbFile = new File(Configuration.getDbLocation());
 
         if (dbFile.exists()) {
             LOG.info("Found a database file - updating and reusing it");
@@ -41,6 +41,7 @@ public class GraphicsDatabase {
         }
 
         dbWorker.start();
+        */
     }
 
     public GraphicsData getById(final long id) {

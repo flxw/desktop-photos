@@ -14,8 +14,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.flxw.demo.Configuration;
 import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +34,12 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Objects;
 
+@Entity
 public class GraphicsData implements Serializable {
+    @Id
+    @Getter
+    private long id;
+
     @JsonIgnore
     @Getter
     private String fileName;
@@ -57,6 +66,8 @@ public class GraphicsData implements Serializable {
     @JsonIgnore  @Getter
     private String thumbnailLocation;
 
+    private static final Logger LOG = LoggerFactory.getLogger(GraphicsData.class);
+
     private GraphicsData() {};
 
     public static GraphicsData of(String fileName) {
@@ -75,6 +86,7 @@ public class GraphicsData implements Serializable {
         gd.size = f.length();
         gd.width = (int) bimg.getWidth();
         gd.height = (int) bimg.getHeight();
+        gd.id = gd.hashCode();
 
         // account for image orientation in JPEG here
         int rotation = 0;
@@ -176,10 +188,6 @@ public class GraphicsData implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(fileName, size);
-    }
-
-    public long getId() {
-        return hashCode();
     }
 
     public static long getId(String fileName) {
