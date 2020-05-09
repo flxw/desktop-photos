@@ -5,7 +5,10 @@ import de.flxw.demo.repositories.PhotoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,5 +24,10 @@ public class PhotoService {
                                           TimelineEntry::getMetadata,
                                           (v1,v2)->v1,
                                           LinkedHashMap::new));
+    }
+
+    public byte[] getThumbnail(Long id) {
+        byte[] b = photoRepository.getThumbnailImageById(id);
+        return b;
     }
 }

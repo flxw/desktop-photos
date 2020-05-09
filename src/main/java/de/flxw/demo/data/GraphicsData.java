@@ -11,7 +11,6 @@ import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.flxw.demo.Configuration;
 import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.io.FilenameUtils;
@@ -21,14 +20,13 @@ import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.Buffer;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -67,6 +65,7 @@ public class GraphicsData implements Serializable {
     }
 
     @JsonIgnore
+    @Lob
     @Getter
     private byte[] thumbnailImage;
 
@@ -113,15 +112,15 @@ public class GraphicsData implements Serializable {
         }
 
         try {
-             BufferedImage scaled = Thumbnails
-                                    .of(bimg)
-                                    .rotate(rotation)
-                                    .size(200, 200)
-                                    .asBufferedImage();
-            ByteArrayOutputStream targetStream = new ByteArrayOutputStream();
-            ImageIO.write(scaled, extension, targetStream);
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            Thumbnails
+                .of(bimg)
+                .rotate(rotation)
+                .size(200, 200)
+                .outputFormat(extension)
+                .toOutputStream(byteStream);
 
-            gd.thumbnailImage = targetStream.toByteArray();
+            gd.thumbnailImage = byteStream.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
