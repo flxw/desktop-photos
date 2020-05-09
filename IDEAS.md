@@ -5,3 +5,11 @@ Frontend:
  * Virtual scrolling to account for number of photos: https://material.angular.io/cdk/scrolling/overview
  * Figure out technique to only load needed images and not everything
  * Scrollbar should serve as a date marker
+ * add taskbar icon that opens browser for java app
+ ** configuration via frontend (image folder...)
+
+Desktop App with Electron:
+* Rewrite backend part
+* embed database via nedb
+* image processing via nodejs modules
+* write typescript
