@@ -52,12 +52,12 @@ public class InitializeService implements InitializingBean {
 
         Set<Long> currentGraphicsIds = currentIdNameMapping.keySet();
 
-        int nChanged = 0;
-        nChanged  = removeOldEntriesFromDb(currentGraphicsIds);
-        nChanged += addNewEntriesToDb(currentGraphicsIds, currentIdNameMapping);
+        int nRemoved = removeOldEntriesFromDb(currentGraphicsIds);
+        int nAdded   = addNewEntriesToDb(currentGraphicsIds, currentIdNameMapping);
 
         long endTime = System.currentTimeMillis();
         LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
+        LOG.info("Database entry diff: +" + nAdded + "  -" + nRemoved);
     }
 
     private int removeOldEntriesFromDb(final Set<Long> current) {
