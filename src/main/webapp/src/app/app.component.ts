@@ -54,7 +54,7 @@ export class AppComponent implements OnInit, AfterViewChecked {
     this.timeline = tl;
     let previous = null;
 
-    for (let date of Object.keys(tl).reverse()) {
+    for (let date of Object.keys(tl)) {
       let nDate = new Date(date);
       let nDateString = String(nDate.getUTCFullYear());
       

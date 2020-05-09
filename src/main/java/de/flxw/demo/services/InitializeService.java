@@ -55,10 +55,11 @@ public class InitializeService implements InitializingBean {
 
         int nChanged = 0;
         nChanged  = removeOldEntriesFromDb(currentGraphicsIds);
-        //nChanged += addNewEntriesToDb(currentGraphicsIds, currentIdNameMapping);
+        nChanged += addNewEntriesToDb(currentGraphicsIds, currentIdNameMapping);
 
         //if (nChanged > 0) commitToDb();
         //constructTimeline();
+        // TODO: continue here with adding new updates to db - do so in current stupid mode first
 
         long endTime = System.currentTimeMillis();
         LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
@@ -87,7 +88,8 @@ public class InitializeService implements InitializingBean {
         pathsOfObjectstoBeAdded
                 .stream()
                 .map(GraphicsData::of)
-                .map(photoRepository::save);
+                .map(photoRepository::save)
+                .collect(Collectors.toList());
 
         return pathsOfObjectstoBeAdded.size();
     }

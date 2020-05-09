@@ -16,7 +16,6 @@ export class LazyLoadingImageComponent implements OnInit {
     ngOnInit() {
         let aspectRatio = this.metadata.width / this.metadata.height;
         this.width = aspectRatio * this.height;
-        console.log(this.metadata)
 
         if (isNaN(this.width)) {
             this.width = 600;

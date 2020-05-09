@@ -17,9 +17,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Repository
 public class GraphicsDatabase {
-    protected Map<Long, GraphicsData> db;
+    /*protected Map<Long, GraphicsData> db;
     @Getter protected SortedMap<Date, List<GraphicsData>> timelineMap;
     private final Logger LOG = LoggerFactory.getLogger(GraphicsDatabase.class);
     private Thread dbWorker;
@@ -27,9 +26,8 @@ public class GraphicsDatabase {
     public GraphicsDatabase() {
     }
 
-    @PostConstruct
     public void init() {
-        /*File dbFile = new File(Configuration.getDbLocation());
+        File dbFile = new File(Configuration.getDbLocation());
 
         if (dbFile.exists()) {
             LOG.info("Found a database file - updating and reusing it");
@@ -41,7 +39,6 @@ public class GraphicsDatabase {
         }
 
         dbWorker.start();
-        */
     }
 
     public GraphicsData getById(final long id) {
@@ -61,22 +58,6 @@ public class GraphicsDatabase {
             }
         }
 
-        public void constructTimeline() {
-            timelineMap = new TreeMap<>(Collections.reverseOrder());
-
-            for (GraphicsData gd : db.values()) {
-                Date key = gd.getDate();
-
-                if(timelineMap.containsKey(key)){
-                    List<GraphicsData> l = timelineMap.get(key);
-                    l.add(gd);
-                } else {
-                    List<GraphicsData> l = new ArrayList<>();
-                    l.add(gd);
-                    timelineMap.put(gd.getDate(), l);
-                }
-            }
-        }
 
         protected boolean checkFileValidity(Path fileName, BasicFileAttributes attrs) {
             boolean isAcceptedFile = Arrays
@@ -163,7 +144,7 @@ public class GraphicsDatabase {
             Set<Long> currentGraphicsIds = currentIdNameMapping.keySet();
 
             int nChanged = 0;
-            nChanged  = removeOldEntriesFromDb(currentGraphicsIds, recoveredGraphicsIds);
+            nChanged = removeOldEntriesFromDb(currentGraphicsIds, recoveredGraphicsIds);
             nChanged += addNewEntriesToDb(currentGraphicsIds, recoveredGraphicsIds, currentIdNameMapping);
 
             if (nChanged > 0) commitToDb();
@@ -178,10 +159,6 @@ public class GraphicsDatabase {
                     .filter(x -> !current.contains(x))
                     .collect(Collectors.toList());
 
-            for (Long graphicsId : toBeRemoved) {
-                db.get(graphicsId).cleanup();
-            }
-
             db.keySet().removeAll(toBeRemoved);
 
             return toBeRemoved.size();
@@ -189,9 +166,9 @@ public class GraphicsDatabase {
 
         private int addNewEntriesToDb(final Set<Long> current, final Set<Long> recovered, final Map<Long, String> mapping) {
             List<String> pathsOfObjectstoBeAdded = current.stream()
-                .filter(x -> !recovered.contains(x))
-                .map(mapping::get)
-                .collect(Collectors.toList());
+                    .filter(x -> !recovered.contains(x))
+                    .map(mapping::get)
+                    .collect(Collectors.toList());
             Map<Long, GraphicsData> toBeAdded = createGraphicsMapFromPathstrings(pathsOfObjectstoBeAdded);
 
             db.putAll(toBeAdded);
@@ -199,4 +176,5 @@ public class GraphicsDatabase {
             return toBeAdded.size();
         }
     }
+     */
 }

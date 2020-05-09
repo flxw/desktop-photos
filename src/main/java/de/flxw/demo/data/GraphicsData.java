@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.flxw.demo.Configuration;
 import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +22,11 @@ import javax.imageio.ImageIO;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.Buffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -63,14 +66,16 @@ public class GraphicsData implements Serializable {
         return Date.from(i);
     }
 
-    @JsonIgnore  @Getter
-    private String thumbnailLocation;
+    @JsonIgnore
+    @Getter
+    private byte[] thumbnailImage;
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphicsData.class);
 
     private GraphicsData() {};
 
     public static GraphicsData of(String fileName) {
+        String extension = FilenameUtils.getExtension(fileName.toLowerCase());
         File f = new File(fileName);
         BufferedImage bimg = null;
         GraphicsData gd = new GraphicsData();
@@ -92,7 +97,7 @@ public class GraphicsData implements Serializable {
         int rotation = 0;
         boolean dimensionsFlipped = false;
 
-        if (fileName.toLowerCase().endsWith("jpg")) {
+        if (extension.equals("jpg")) {
             try {
                 dimensionsFlipped = shouldFlipDimensions(f);
             } catch (Exception e) {
@@ -108,15 +113,15 @@ public class GraphicsData implements Serializable {
         }
 
         try {
-            String thumbFileName = Long.toString(gd.getId());
-            gd.thumbnailLocation = Paths.get(Configuration.getAppDir(), thumbFileName + ".png").toString();
-            File thumbnailFile = new File(gd.thumbnailLocation);
-            Thumbnails
-                    .of(bimg)
-                    .rotate(rotation)
-                    .size(200, 200)
-                    .outputFormat("png")
-                    .toFile(thumbnailFile);
+             BufferedImage scaled = Thumbnails
+                                    .of(bimg)
+                                    .rotate(rotation)
+                                    .size(200, 200)
+                                    .asBufferedImage();
+            ByteArrayOutputStream targetStream = new ByteArrayOutputStream();
+            ImageIO.write(scaled, extension, targetStream);
+
+            gd.thumbnailImage = targetStream.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
@@ -194,10 +199,5 @@ public class GraphicsData implements Serializable {
         File f = new File(fileName);
 
         return Objects.hash(fileName, f.length());
-    }
-
-    public void cleanup() {
-        File toBeDeleted = new File(this.thumbnailLocation);
-        toBeDeleted.delete();
     }
 }
