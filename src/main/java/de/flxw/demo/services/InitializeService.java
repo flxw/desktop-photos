@@ -1,6 +1,6 @@
 package de.flxw.demo.services;
 
-import de.flxw.demo.Configuration;
+import de.flxw.demo.configuration.Configuration;
 import de.flxw.demo.data.GraphicsData;
 import de.flxw.demo.repositories.PhotoRepository;
 import org.slf4j.Logger;
@@ -33,6 +33,7 @@ public class InitializeService implements InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         long startTime = System.currentTimeMillis();
+        LOG.info("Starting database population...");
 
         // build up filetree for diffing
         String pwd = (new File("")).getAbsolutePath();
