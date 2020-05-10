@@ -24,41 +24,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
-public class InitializeService implements InitializingBean {
+public class InitializeService extends Thread implements InitializingBean {
     private static final Logger LOG = LoggerFactory.getLogger(InitializeService.class);
 
     @Autowired
     PhotoRepository photoRepository;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        long startTime = System.currentTimeMillis();
-        LOG.info("Starting database population...");
-
-        // build up filetree for diffing
-        String pwd = (new File("")).getAbsolutePath();
-        Map<Long, String> currentIdNameMapping;
-
-        try {
-            Stream<Path> walk = Files.find(Paths.get(pwd), Integer.MAX_VALUE, this::checkFileValidity);
-            currentIdNameMapping = walk
-                    .filter(Files::isRegularFile)
-                    .map(Path::toString)
-                    .collect(Collectors.toMap(GraphicsData::getId, Function.identity()));
-        } catch (IOException e) {
-            e.printStackTrace();
-            LOG.error("FATAL! Can't scan the current directory!");
-            return;
-        }
-
-        Set<Long> currentGraphicsIds = currentIdNameMapping.keySet();
-
-        int nRemoved = removeOldEntriesFromDb(currentGraphicsIds);
-        int nAdded   = addNewEntriesToDb(currentGraphicsIds, currentIdNameMapping);
-
-        long endTime = System.currentTimeMillis();
-        LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
-        LOG.info("Database entry diff: +" + nAdded + "  -" + nRemoved);
+    public void afterPropertiesSet() {
+        this.start();
     }
 
     private int removeOldEntriesFromDb(final Set<Long> current) {
@@ -82,7 +56,7 @@ public class InitializeService implements InitializingBean {
                 .collect(Collectors.toList());
 
         pathsOfObjectstoBeAdded
-                .stream()
+                .parallelStream()
                 .map(GraphicsData::of)
                 .map(photoRepository::save)
                 .collect(Collectors.toList());
@@ -98,5 +72,36 @@ public class InitializeService implements InitializingBean {
         boolean isContainedInAppDirectory = fileName.toAbsolutePath().toString().contains(Configuration.getAppDir());
 
         return isAcceptedFile && !isContainedInAppDirectory;
+    }
+
+    @Override
+    public void run() {
+        super.run();
+        long startTime = System.currentTimeMillis();
+        LOG.info("Starting database population...");
+
+        String pwd = (new File("")).getAbsolutePath();
+        Map<Long, String> currentIdNameMapping;
+
+        try {
+            Stream<Path> walk = Files.find(Paths.get(pwd), Integer.MAX_VALUE, this::checkFileValidity);
+            currentIdNameMapping = walk
+                    .filter(Files::isRegularFile)
+                    .map(Path::toString)
+                    .collect(Collectors.toMap(GraphicsData::getId, Function.identity()));
+        } catch (IOException e) {
+            e.printStackTrace();
+            LOG.error("FATAL! Can't scan the current directory!");
+            return;
+        }
+
+        Set<Long> currentGraphicsIds = currentIdNameMapping.keySet();
+
+        int nRemoved = removeOldEntriesFromDb(currentGraphicsIds);
+        int nAdded   = addNewEntriesToDb(currentGraphicsIds, currentIdNameMapping);
+
+        long endTime = System.currentTimeMillis();
+        LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
+        LOG.info("Database entry diff: +" + nAdded + " -" + nRemoved);
     }
 }
