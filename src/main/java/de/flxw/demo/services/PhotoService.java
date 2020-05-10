@@ -30,4 +30,8 @@ public class PhotoService {
         byte[] b = photoRepository.getThumbnailImageById(id);
         return b;
     }
+
+    public int getState() {
+        return photoRepository.getDbEntryCount();
+    }
 }

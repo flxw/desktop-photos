@@ -31,4 +31,9 @@ public class GraphicsController {
                 .contentType(MediaType.IMAGE_JPEG)
                 .body(thumbnailBytes);
     }
+
+    @GetMapping("/state")
+    public int getState() {
+        return photoService.getState();
+    }
 }

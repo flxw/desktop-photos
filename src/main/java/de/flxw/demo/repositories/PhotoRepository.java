@@ -29,4 +29,7 @@ public interface PhotoRepository extends JpaRepository<GraphicsData, Long> {
 
     @Query("SELECT thumbnailImage FROM GraphicsData WHERE id = :id")
     byte[] getThumbnailImageById(@Param("id") Long id);
+
+    @Query("SELECT COUNT(id) FROM GraphicsData")
+    int getDbEntryCount();
 }
