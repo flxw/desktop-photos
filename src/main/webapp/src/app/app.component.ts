@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChild, AfterViewChecked } from '@angular/core';
 import { GraphicsService } from './graphics.service';
 import { TimePortService } from './time-port.service';
+import { Tile } from './tile';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,7 @@ export class AppComponent implements OnInit, AfterViewChecked {
     scrollHeight : 0
   };
   firstViewCheck:boolean = true;
+  tileDimension:Tile = new Tile();
 
   constructor(public gs: GraphicsService, public tp: TimePortService) {
   }

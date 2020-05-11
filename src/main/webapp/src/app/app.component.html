@@ -1,17 +1,12 @@
 <div #body>
-    <cdk-virtual-scroll-viewport itemSize="dm.size" (scroll)="setTopScroll($event)">
+    <cdk-virtual-scroll-viewport [itemSize]="tileDimension.height">
         <div class="date-block" *cdkVirtualFor="let dm of timeline | keyvalue: asIsOrder">
-            <h1>{{dm.key | date:'fullDate'}}</h1>
-
-            <ng-template [ngIf]="shouldBeRendered(dm.key)">
-                <time-scrollbar-anchor [text]="dm.key | date:'y'"></time-scrollbar-anchor>
-            </ng-template>
-
             <div fxLayout="row wrap" fxLayoutAlign="start center" fxLayoutGap="20px grid">
-                <lazy-loading-image 
+                <date-tile [date]="dm.key"></date-tile>
+                <lazy-loading-image-tile
                     [metadata]="v"
                     *ngFor="let v of dm.value"
-                ></lazy-loading-image>
+                ></lazy-loading-image-tile>
             </div>
         </div>
     </cdk-virtual-scroll-viewport>

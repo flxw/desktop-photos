@@ -1,15 +1,14 @@
 import { Component, Input, OnInit, HostBinding } from '@angular/core';
 import { GraphicsData } from '../graphics-data.object';
+import { Tile } from '../tile';
 
 @Component({
-    selector: 'lazy-loading-image',
-    templateUrl: './lazy-loading-image.component.html',
-    styleUrls: ['./lazy-loading-image.component.styl']
+    selector: 'lazy-loading-image-tile',
+    templateUrl: './lazy-loading-image-tile.component.html',
+    styleUrls: ['./lazy-loading-image-tile.component.styl']
 })
-export class LazyLoadingImageComponent implements OnInit {
+export class LazyLoadingImageTileComponent extends Tile implements OnInit {
     @Input() metadata : GraphicsData;
-    width:number = 0;
-    height:number = 200;
     defaultImage:string = 'https://www.placecage.com/1000/1000';
     url:string = "";
 
