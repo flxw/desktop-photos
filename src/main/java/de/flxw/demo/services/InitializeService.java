@@ -11,9 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.List;
@@ -64,7 +62,21 @@ public class InitializeService extends Thread implements InitializingBean {
         return pathsOfObjectstoBeAdded.size();
     }
 
+    private void removeEntryFromDb(String fileName) {
+        Long entryId = GraphicsData.getId(fileName);
+        photoRepository.deleteById(entryId);
+    }
+
+    private void addEntryToDb(String fileName) {
+        GraphicsData newEntry = GraphicsData.of(fileName);
+        photoRepository.save(newEntry);
+    }
+
     private boolean checkFileValidity(Path fileName, BasicFileAttributes attrs) {
+        return isFileValid(fileName);
+    }
+
+    private boolean isFileValid(Path fileName) {
         boolean isAcceptedFile = Arrays
                 .stream(Configuration.getSupportedFileExtensions())
                 .anyMatch((ext) -> fileName.toString().toLowerCase().endsWith(ext));
@@ -74,9 +86,7 @@ public class InitializeService extends Thread implements InitializingBean {
         return isAcceptedFile && !isContainedInAppDirectory;
     }
 
-    @Override
-    public void run() {
-        super.run();
+    private void runInitialDbCheck() {
         long startTime = System.currentTimeMillis();
         LOG.info("Starting database population...");
 
@@ -103,5 +113,54 @@ public class InitializeService extends Thread implements InitializingBean {
         long endTime = System.currentTimeMillis();
         LOG.info("Database recovery and update took " + (endTime - startTime) + "ms");
         LOG.info("Database entry diff: +" + nAdded + " -" + nRemoved);
+    }
+
+    private void watchFilesystemForChanges() {
+        try {
+
+            WatchService watchService = FileSystems.getDefault().newWatchService();
+            Path path = Paths.get(System.getProperty("user.dir"));
+
+            path.register(
+                    watchService,
+                    StandardWatchEventKinds.ENTRY_CREATE,
+                    StandardWatchEventKinds.ENTRY_DELETE,
+                    StandardWatchEventKinds.ENTRY_MODIFY);
+
+            WatchKey key;
+            while ((key = watchService.take()) != null) {
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    WatchEvent.Kind<?> kind = event.kind();
+                    String fileName = Paths.get(event.context().toString()).toAbsolutePath().toString();
+
+                    if (!isFileValid(Paths.get(fileName))) continue;
+
+                    if (StandardWatchEventKinds.ENTRY_CREATE.equals(kind)) {
+                        LOG.info("Photo added: " + fileName);
+                        addEntryToDb(fileName);
+                    } else if (StandardWatchEventKinds.ENTRY_DELETE.equals(kind)) {
+                        LOG.info("Photo deleted: " + fileName);
+                        removeEntryFromDb(fileName);
+                    } else if (StandardWatchEventKinds.ENTRY_MODIFY.equals(kind)) {
+                        LOG.info("Photo updated: " + fileName);
+                        removeEntryFromDb(fileName);
+                        addEntryToDb(fileName);
+                    }
+                }
+                key.reset();
+            }
+        } catch (Exception e) {
+            // when watcher couldn't register
+            e.printStackTrace();
+            return;
+        }
+    }
+
+    @Override
+    public void run() {
+        super.run();
+
+        runInitialDbCheck();
+        watchFilesystemForChanges();
     }
 }

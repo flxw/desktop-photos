@@ -191,12 +191,10 @@ public class GraphicsData implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(fileName, size);
+        return Objects.hash(fileName);
     }
 
     public static long getId(String fileName) {
-        File f = new File(fileName);
-
-        return Objects.hash(fileName, f.length());
+        return Objects.hash(fileName);
     }
 }
