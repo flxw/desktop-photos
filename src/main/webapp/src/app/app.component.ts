@@ -1,74 +1,41 @@
-import { Component, OnInit, AfterViewInit, ViewChild, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, AfterViewChecked, ElementRef } from '@angular/core';
 import { GraphicsService } from './graphics.service';
-import { TimePortService } from './time-port.service';
 import { Tile } from './tile';
+import { GraphicsData } from './graphics-data.object';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.styl']
 })
-export class AppComponent implements OnInit, AfterViewChecked {
-  @ViewChild("body") body;
-  timeline: Map<Date, any>;
-  anchorRenderDates:string[] = [];
-  scrollEventProperties: any = {
-    scrollTop : 0,
-    scrollHeight : 0
-  };
-  firstViewCheck:boolean = true;
-  tileDimension:Tile = new Tile();
+export class AppComponent implements AfterViewInit {
+  @ViewChild("container") container;
+  sampleTile:Tile = new Tile();
+  timelineRows = [];
 
-  constructor(public gs: GraphicsService, public tp: TimePortService) {
+  constructor(public graphicsService: GraphicsService) {
   }
 
-  ngOnInit() {
-    this.populateTimeline();
-  }
-
-  ngAfterViewChecked() {
-    if (this.firstViewCheck) {
-      let ce = this.body.nativeElement.firstChild.firstChild;
-      this.tp.setContainerElement(ce);
-      this.firstViewCheck = false;
-    }
-  }
-
-  populateTimeline() {
-    this.gs
-        .getTimeline()
-        .subscribe(tl => this.preProcessTimeline(tl));
-  }
-
-  asIsOrder(a, b) {
-    return 0;
-  }
-
-  setTopScroll(e:any) {
-    this.scrollEventProperties = {
-      scrollTop: e.srcElement.scrollTop,
-      scrollHeight: e.srcElement.scrollHeight
-    };
-  }
-
-  preProcessTimeline(tl:Map<Date,any>):void {
-    // acquire the newest dates in a year to place the anchor there
-    this.timeline = tl;
-    let previous = null;
-
-    for (let date of Object.keys(tl)) {
-      let nDate = new Date(date);
-      let nDateString = String(nDate.getUTCFullYear());
-      
-      if (previous != nDateString) {
-        this.anchorRenderDates.push(date);
+  ngAfterViewInit(): void {
+    //let that = this;
+    this.graphicsService.getTimeline().subscribe((timelineElements:GraphicsData[]) => {
+      let rows = [];
+      const viewWidth = this.container.elementRef.nativeElement.clientWidth;
+  
+      for (let i = 0, rowWidth = 0, row = []; i < timelineElements.length; ++i) {
+        let itemWidth = GraphicsData.getScaledWidthForHeight(Tile.initialHeight, timelineElements[i]);
+        
+        if (rowWidth + itemWidth < viewWidth) {
+          rowWidth += itemWidth;
+          row.push(timelineElements[i]);
+        } else {
+          rows.push(row);
+          rowWidth = itemWidth;
+          row = [timelineElements[i]];
+        }
       }
-
-      previous = nDateString;
-    }
-  }
-
-  shouldBeRendered(dNow:string):boolean {
-    return this.anchorRenderDates.includes(dNow);
+  
+      this.timelineRows = rows;
+    });
   }
 }

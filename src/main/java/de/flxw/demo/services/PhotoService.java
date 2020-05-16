@@ -1,8 +1,10 @@
 package de.flxw.demo.services;
 
+import de.flxw.demo.data.GraphicsData;
 import de.flxw.demo.data.TimelineEntry;
 import de.flxw.demo.repositories.PhotoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -29,5 +31,9 @@ public class PhotoService {
     public byte[] getThumbnail(Long id) {
         byte[] b = photoRepository.getThumbnailImageById(id);
         return b;
+    }
+
+    public List<GraphicsData> getAll() {
+        return photoRepository.findAll(Sort.by("timeStamp"));
     }
 }
