@@ -1,15 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { GraphicsData } from './graphics-data.object';
 import { Observable } from 'rxjs';
-import { map, publishReplay, refCount } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GraphicsService {
   timelineUrl = 'http://localhost:8080/api/v1/timeline';
-  cachedResult:Observable<GraphicsData[]>;
+  cachedResult:Observable<object>;
 
     // TODO: distribute images manually into rows based on their width
     // listen for viewport width changes
@@ -19,7 +17,7 @@ export class GraphicsService {
 
   getTimeline() {
     if (this.cachedResult == null) {
-      this.cachedResult = this.http.get<GraphicsData[]>(this.timelineUrl);
+      this.cachedResult = this.http.get<object>(this.timelineUrl);
     }
 
     return this.cachedResult;

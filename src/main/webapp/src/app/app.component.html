@@ -2,9 +2,22 @@
     <div *cdkVirtualFor="let row of timelineRows"
          [style.height.px]="sampleTile.height"
          class="row">
-        <img
-            src="http://localhost:8080/graphics?id={{entry.id}}"
-            [style.height.px]="sampleTile.height"
-            *ngFor="let entry of row">
+
+         <div *ngFor="let tile of row"
+              [style.height.px]="sampleTile.height"
+              [ngSwitch]="tile.getType()"
+              class="tile">
+            <!---->
+            <h1
+                *ngSwitchCase="'date-tile'"
+                [style.width.px]="tile.width">
+                {{ tile.date | date:'fullDate' }}
+            </h1>
+
+            <img
+                *ngSwitchCase="'graphics-tile'"
+                src="http://localhost:8080/graphics?id={{tile.id}}"
+            >
+        </div>
     </div>
 </cdk-virtual-scroll-viewport>
