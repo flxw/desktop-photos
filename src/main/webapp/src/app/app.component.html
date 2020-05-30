@@ -1,10 +1,10 @@
-<cdk-virtual-scroll-viewport [itemSize]="sampleTile.height" #container>
+<cdk-virtual-scroll-viewport [itemSize]="rowHeight" #container>
     <div *cdkVirtualFor="let row of timelineRows"
-         [style.height.px]="sampleTile.height"
+         [style.height.px]="rowHeight"
          class="row">
 
          <div *ngFor="let tile of row"
-              [style.height.px]="sampleTile.height"
+              [style.height.px]="tileHeight"
               [ngSwitch]="tile.getType()"
               class="tile">
             <!---->

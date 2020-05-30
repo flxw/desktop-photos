@@ -14,7 +14,9 @@ export class AppComponent implements AfterViewInit {
   timelineRows = [];
   timelineElements:Tile[] = [];
   timelineContainerWidth:number;
-  sampleTile:Tile = new DateTileData();
+  
+  tileHeight:number = Tile.initialHeight;
+  rowHeight:number = Tile.initialHeight + 2*Tile.margin;
 
   lastResizeTime:number = null;
   isResizeTimeoutRunning:boolean = false;
