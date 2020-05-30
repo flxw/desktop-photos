@@ -21,14 +21,14 @@ export class AppComponent implements AfterViewInit {
 
   constructor(public graphicsService: GraphicsService) { }
 
-  ngAfterViewInit(): void {
+  ngAfterViewInit() {
     this.graphicsService.getTimeline().subscribe((timelineElements:GraphicsData[]) => {
       this.timelineElements = timelineElements;
       this.recalculateTimelineRows();
     });
   }
 
-  recalculateTimelineRows():void {
+  recalculateTimelineRows() {
     let rows = [];
     this.timelineContainerWidth = this.container.elementRef.nativeElement.clientWidth;
 
@@ -48,7 +48,8 @@ export class AppComponent implements AfterViewInit {
     this.timelineRows = rows;
   }
 
-  @HostListener("window:resize", ["$event"]) onContainerResize(e:UIEvent) {
+  @HostListener("window:resize", ["$event"])
+  onContainerResize(e:UIEvent) {
     this.lastResizeTime = new Date().getMilliseconds();
 
     if (this.isResizeTimeoutRunning === false) {
@@ -59,11 +60,11 @@ export class AppComponent implements AfterViewInit {
   
   handleResizeEnd() {
     let now = new Date().getMilliseconds();
+
     if ((now - this.lastResizeTime) < this.resizeTimeThreshold) {
       this.timeoutResizeEnd();
     } else {
       this.isResizeTimeoutRunning = false;
-
       let newWidth = this.container.elementRef.nativeElement.clientWidth;
       
       if (this.timelineContainerWidth != newWidth) {

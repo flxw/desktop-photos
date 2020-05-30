@@ -2,11 +2,6 @@
     <div *cdkVirtualFor="let row of timelineRows"
          [style.height.px]="sampleTile.height"
          class="row">
-        <!--<lazy-loading-image-tile
-            [metadata]="entry"
-            *ngFor="let entry of row"
-            [style.height.px]="sampleTile.height">
-        </lazy-loading-image-tile>-->
         <img
             src="http://localhost:8080/graphics?id={{entry.id}}"
             [style.height.px]="sampleTile.height"

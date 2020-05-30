@@ -29,8 +29,7 @@ public class PhotoService {
     }
 
     public byte[] getThumbnail(Long id) {
-        byte[] b = photoRepository.getThumbnailImageById(id);
-        return b;
+        return photoRepository.getThumbnailImageById(id);
     }
 
     public List<GraphicsData> getAll() {
