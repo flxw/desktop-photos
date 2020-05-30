@@ -67,7 +67,6 @@ export class AppComponent implements AfterViewInit {
       let newWidth = this.container.elementRef.nativeElement.clientWidth;
       
       if (this.timelineContainerWidth != newWidth) {
-        console.log("Reflowing!")
         this.recalculateTimelineRows();
       }
     }
