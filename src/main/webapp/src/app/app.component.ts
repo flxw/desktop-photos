@@ -1,72 +1,101 @@
-import { Component, OnInit, AfterViewInit, ViewChild, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, AfterViewChecked, ElementRef, HostListener } from '@angular/core';
 import { GraphicsService } from './graphics.service';
-import { TimePortService } from './time-port.service';
+import { Tile } from './tile';
+import { GraphicsTileData } from './graphics-tile-data';
+import { DateTileData } from './date-tile-data';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.styl']
 })
-export class AppComponent implements OnInit, AfterViewChecked {
-  @ViewChild("body") body;
-  timeline: Map<Date, any>;
-  anchorRenderDates:string[] = [];
-  scrollEventProperties: any = {
-    scrollTop : 0,
-    scrollHeight : 0
-  };
-  firstViewCheck:boolean = true;
+export class AppComponent implements AfterViewInit {
+  @ViewChild("container") container;
+  timelineRows = [];
+  timelineElements:Tile[] = [];
+  timelineContainerWidth:number;
+  
+  tileHeight:number = Tile.initialHeight;
+  rowHeight:number = Tile.initialHeight + 2*Tile.margin;
 
-  constructor(public gs: GraphicsService, public tp: TimePortService) {
+  lastResizeTime:number = null;
+  isResizeTimeoutRunning:boolean = false;
+  resizeTimeThreshold:number = 200;
+
+  constructor(public graphicsService: GraphicsService) { }
+
+  ngAfterViewInit() {
+    this.graphicsService.getTimeline().subscribe((timelineMap:object) => {
+      let timelineDates = Object.keys(timelineMap);
+
+      timelineDates.forEach(timelineDate => {
+        let dateTileData = new DateTileData();
+        dateTileData.date = new Date(timelineDate);
+        this.timelineElements.push(dateTileData)
+
+        timelineMap[timelineDate].forEach(element => {
+          let graphicsTileData = new GraphicsTileData();
+
+          graphicsTileData.height = element.height;
+          graphicsTileData.width = element.width;
+          graphicsTileData.id = element.id;
+          graphicsTileData.timeStamp = element.timeStamp;
+
+          this.timelineElements.push(graphicsTileData)
+        });
+      });
+
+      this.recalculateTimelineRows();
+    });
   }
 
-  ngOnInit() {
-    this.populateTimeline();
-  }
+  recalculateTimelineRows() {
+    let rows = [];
+    this.timelineContainerWidth = this.container.elementRef.nativeElement.clientWidth;
 
-  ngAfterViewChecked() {
-    if (this.firstViewCheck) {
-      let ce = this.body.nativeElement.firstChild.firstChild;
-      this.tp.setContainerElement(ce);
-      this.firstViewCheck = false;
-    }
-  }
-
-  populateTimeline() {
-    this.gs
-        .getTimeline()
-        .subscribe(tl => this.preProcessTimeline(tl));
-  }
-
-  asIsOrder(a, b) {
-    return 0;
-  }
-
-  setTopScroll(e:any) {
-    this.scrollEventProperties = {
-      scrollTop: e.srcElement.scrollTop,
-      scrollHeight: e.srcElement.scrollHeight
-    };
-  }
-
-  preProcessTimeline(tl:Map<Date,any>):void {
-    // acquire the newest dates in a year to place the anchor there
-    this.timeline = tl;
-    let previous = null;
-
-    for (let date of Object.keys(tl)) {
-      let nDate = new Date(date);
-      let nDateString = String(nDate.getUTCFullYear());
+    for (let i = 0, rowWidth = 0, row = []; i < this.timelineElements.length; ++i) {
+      let itemWidth = Tile.getScaledWidthForHeight(Tile.initialHeight, this.timelineElements[i]);
       
-      if (previous != nDateString) {
-        this.anchorRenderDates.push(date);
+      if (rowWidth + itemWidth < this.timelineContainerWidth) {
+        rowWidth += itemWidth;
+        row.push(this.timelineElements[i]);
+      } else {
+        rows.push(row);
+        rowWidth = itemWidth;
+        row = [this.timelineElements[i]];
       }
+    }
 
-      previous = nDateString;
+    this.timelineRows = rows;
+  }
+
+  @HostListener("window:resize", ["$event"])
+  onContainerResize(e:UIEvent) {
+    this.lastResizeTime = new Date().getMilliseconds();
+
+    if (this.isResizeTimeoutRunning === false) {
+      this.isResizeTimeoutRunning = true;
+      this.timeoutResizeEnd();
+    }
+  }
+  
+  handleResizeEnd() {
+    let now = new Date().getMilliseconds();
+
+    if ((now - this.lastResizeTime) < this.resizeTimeThreshold) {
+      this.timeoutResizeEnd();
+    } else {
+      this.isResizeTimeoutRunning = false;
+      let newWidth = this.container.elementRef.nativeElement.clientWidth;
+      
+      if (this.timelineContainerWidth != newWidth) {
+        this.recalculateTimelineRows();
+      }
     }
   }
 
-  shouldBeRendered(dNow:string):boolean {
-    return this.anchorRenderDates.includes(dNow);
+  timeoutResizeEnd() {
+    let thisCapsule = () => { this.handleResizeEnd() };
+    setTimeout(thisCapsule, this.resizeTimeThreshold);
   }
 }

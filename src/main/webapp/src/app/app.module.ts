@@ -7,16 +7,14 @@ import { HttpClientModule }    from '@angular/common/http';
 import {ScrollingModule} from '@angular/cdk/scrolling';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { LazyLoadImageModule } from 'ng-lazyload-image';
-import { LazyLoadingImageComponent } from './lazy-loading-image/lazy-loading-image.component';
 import { TimeScrollbarComponent } from './time-scrollbar/time-scrollbar.component';
 import { TimeScrollbarAnchorComponent } from './time-scrollbar-anchor/time-scrollbar-anchor.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    LazyLoadingImageComponent,
     TimeScrollbarComponent,
-    TimeScrollbarAnchorComponent
+    TimeScrollbarAnchorComponent,
   ],
   imports: [
     BrowserModule,
@@ -24,7 +22,7 @@ import { TimeScrollbarAnchorComponent } from './time-scrollbar-anchor/time-scrol
     HttpClientModule,
     ScrollingModule,
     FlexLayoutModule,
-    LazyLoadImageModule
+    LazyLoadImageModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
