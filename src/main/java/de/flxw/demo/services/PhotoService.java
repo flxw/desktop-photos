@@ -7,10 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +27,12 @@ public class PhotoService {
 
     public byte[] getThumbnail(Long id) {
         return photoRepository.getThumbnailImageById(id);
+    }
+
+    public String getFileNameForId(Long id) {
+        Optional<GraphicsData> eventualEntry = photoRepository.findById(id);
+
+        return eventualEntry.map(GraphicsData::getFileName).orElse(null);
     }
 
     public List<GraphicsData> getAll() {

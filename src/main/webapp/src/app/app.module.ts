@@ -7,6 +7,7 @@ import { HttpClientModule }    from '@angular/common/http';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { TimeshowtriggerDirective } from './timeshow/timeshowtrigger.directive';
 import { TimeshowComponent } from './timeshow/timeshow.component';
+import { LightboxModule } from 'ngx-lightbox';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { TimeshowComponent } from './timeshow/timeshow.component';
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    ScrollingModule
+    ScrollingModule,
+    LightboxModule
   ],
   providers: [],
   bootstrap: [AppComponent]

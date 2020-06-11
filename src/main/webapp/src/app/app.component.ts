@@ -4,6 +4,7 @@ import { Tile } from './tile';
 import { GraphicsTileData } from './graphics-tile-data';
 import { DateTileData } from './date-tile-data';
 import { TimeshowService } from './timeshow/timeshow.service';
+import { Lightbox } from 'ngx-lightbox';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,7 @@ export class AppComponent implements AfterViewInit {
   timelineRows = [];
   timelineElements:Tile[] = [];
   timelineContainerWidth:number;
+  albumForLightbox = [];
   
   tileHeight:number = Tile.initialHeight;
   rowHeight:number = Tile.initialHeight + 2*Tile.margin;
@@ -24,26 +26,34 @@ export class AppComponent implements AfterViewInit {
   resizeTimeThreshold:number = 200;
 
   constructor(public graphicsService: GraphicsService,
-              public timeshowService: TimeshowService) { }
+              public timeshowService: TimeshowService,
+              private _lightbox: Lightbox) { }
 
   ngAfterViewInit() {
     this.graphicsService.getTimeline().subscribe((timelineMap:object) => {
       let timelineDates = Object.keys(timelineMap);
+      let indexCounter = 0
 
-      timelineDates.forEach(timelineDate => {
+      timelineDates.forEach((timelineDate) => {
         let dateTileData = new DateTileData();
         dateTileData.date = new Date(timelineDate);
         this.timelineElements.push(dateTileData)
 
-        timelineMap[timelineDate].forEach(element => {
+        timelineMap[timelineDate].forEach((element) => {
           let graphicsTileData = new GraphicsTileData();
 
           graphicsTileData.height = element.height;
           graphicsTileData.width = element.width;
           graphicsTileData.id = element.id;
           graphicsTileData.timeStamp = element.timeStamp;
+          graphicsTileData.index = indexCounter++;
 
           this.timelineElements.push(graphicsTileData)
+          this.albumForLightbox.push({
+            caption: graphicsTileData.id,
+            src: "http://localhost:8080/full?id=" + graphicsTileData.id
+          });
+
         });
       });
 
@@ -60,6 +70,7 @@ export class AppComponent implements AfterViewInit {
       let elem:Tile = this.timelineElements[i]
       let itemWidth = Tile.getScaledWidthForHeight(Tile.initialHeight, elem);
 
+      // create rows for virtual scrolling
       if (rowWidth + itemWidth < this.timelineContainerWidth) {
         rowWidth += itemWidth;
         row.push(elem);
@@ -70,6 +81,7 @@ export class AppComponent implements AfterViewInit {
         nrow = nrow + 1;
       }
 
+      // create date-row mapping for scroll date popup
       if (elem.getType() == 'date-tile' && daterows.length < nrow) {
         let dateTileElem:DateTileData = elem as DateTileData;
         daterows.push(dateTileElem.date);
@@ -78,6 +90,10 @@ export class AppComponent implements AfterViewInit {
 
     this.timelineRows = rows;
     this.timeshowService.setDateRows(daterows);
+  }
+
+  openImageInLightBox(index:number) {
+    this._lightbox.open(this.albumForLightbox, index);
   }
   
   handleResizeEnd() {
