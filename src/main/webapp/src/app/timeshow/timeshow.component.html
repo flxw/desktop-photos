@@ -1,4 +1,5 @@
 <div
+  *ngIf="tss.getTimeshowTriggered()"
   class="timeshow">
-  <p>timeshow works!</p>
+  <p>{{ tss.getCurrentRowDate() | date:'MMMM yyyy' }}</p>
 </div>

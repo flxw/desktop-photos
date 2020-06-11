@@ -3,6 +3,7 @@ import { GraphicsService } from './graphics.service';
 import { Tile } from './tile';
 import { GraphicsTileData } from './graphics-tile-data';
 import { DateTileData } from './date-tile-data';
+import { TimeshowService } from './timeshow/timeshow.service';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +23,8 @@ export class AppComponent implements AfterViewInit {
   isResizeTimeoutRunning:boolean = false;
   resizeTimeThreshold:number = 200;
 
-  constructor(public graphicsService: GraphicsService) { }
+  constructor(public graphicsService: GraphicsService,
+              public timeshowService: TimeshowService) { }
 
   ngAfterViewInit() {
     this.graphicsService.getTimeline().subscribe((timelineMap:object) => {
@@ -51,30 +53,31 @@ export class AppComponent implements AfterViewInit {
 
   recalculateTimelineRows() {
     let rows = [];
+    let daterows:Date[] = [];
     this.timelineContainerWidth = this.container.elementRef.nativeElement.clientWidth;
 
     for (let i = 0, rowWidth = 0, nrow = 0, row = []; i < this.timelineElements.length; ++i) {
-      let itemWidth = Tile.getScaledWidthForHeight(Tile.initialHeight, this.timelineElements[i]);
-      
+      let elem:Tile = this.timelineElements[i]
+      let itemWidth = Tile.getScaledWidthForHeight(Tile.initialHeight, elem);
+
       if (rowWidth + itemWidth < this.timelineContainerWidth) {
         rowWidth += itemWidth;
-        row.push(this.timelineElements[i]);
+        row.push(elem);
       } else {
         rows.push(row);
         rowWidth = itemWidth;
-        row = [this.timelineElements[i]];
+        row = [elem];
         nrow = nrow + 1;
       }
 
-      if (this.timelineElements[0].getType() == 'date-tile') {
-        // TODO: remember individual months and years with their row here
-        // scroll popup can then show which month you are in
-        // jump to position by multipliying row with row height
-
+      if (elem.getType() == 'date-tile' && daterows.length < nrow) {
+        let dateTileElem:DateTileData = elem as DateTileData;
+        daterows.push(dateTileElem.date);
       }
     }
 
     this.timelineRows = rows;
+    this.timeshowService.setDateRows(daterows);
   }
   
   handleResizeEnd() {
