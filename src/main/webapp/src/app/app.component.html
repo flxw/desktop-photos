@@ -12,7 +12,7 @@
                 *ngSwitchCase="'date-tile'"
                 [style.width.px]="tile.width"
                 [style.max-width.px]="timelineContainerWidth">
-                {{ tile.date | date:'fullDate' }}
+                {{ tile.date | date:'E, MMMM d, y' }}
             </h1>
 
             <img
