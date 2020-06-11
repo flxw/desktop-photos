@@ -53,7 +53,7 @@ export class AppComponent implements AfterViewInit {
     let rows = [];
     this.timelineContainerWidth = this.container.elementRef.nativeElement.clientWidth;
 
-    for (let i = 0, rowWidth = 0, row = []; i < this.timelineElements.length; ++i) {
+    for (let i = 0, rowWidth = 0, nrow = 0, row = []; i < this.timelineElements.length; ++i) {
       let itemWidth = Tile.getScaledWidthForHeight(Tile.initialHeight, this.timelineElements[i]);
       
       if (rowWidth + itemWidth < this.timelineContainerWidth) {
@@ -63,20 +63,18 @@ export class AppComponent implements AfterViewInit {
         rows.push(row);
         rowWidth = itemWidth;
         row = [this.timelineElements[i]];
+        nrow = nrow + 1;
+      }
+
+      if (this.timelineElements[0].getType() == 'date-tile') {
+        // TODO: remember individual months and years with their row here
+        // scroll popup can then show which month you are in
+        // jump to position by multipliying row with row height
+
       }
     }
 
     this.timelineRows = rows;
-  }
-
-  @HostListener("window:resize", ["$event"])
-  onContainerResize(e:UIEvent) {
-    this.lastResizeTime = new Date().getMilliseconds();
-
-    if (this.isResizeTimeoutRunning === false) {
-      this.isResizeTimeoutRunning = true;
-      this.timeoutResizeEnd();
-    }
   }
   
   handleResizeEnd() {
@@ -97,5 +95,15 @@ export class AppComponent implements AfterViewInit {
   timeoutResizeEnd() {
     let thisCapsule = () => { this.handleResizeEnd() };
     setTimeout(thisCapsule, this.resizeTimeThreshold);
+  }
+
+  @HostListener("window:resize", ["$event"])
+  onContainerResize(e:UIEvent) {
+    this.lastResizeTime = new Date().getMilliseconds();
+
+    if (this.isResizeTimeoutRunning === false) {
+      this.isResizeTimeoutRunning = true;
+      this.timeoutResizeEnd();
+    }
   }
 }
