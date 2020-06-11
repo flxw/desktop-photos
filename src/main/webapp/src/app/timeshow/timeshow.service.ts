@@ -16,12 +16,4 @@ export class TimeshowService {
   getTimeshowTriggered() {
     return this.isTimeshowTriggered;
   }
-
-  setRelativeTimeshowPosition(relativePosition:number) {
-    this.relativePosition = relativePosition;
-  }
-
-  getRelativeTimeshowPosition() {
-    return this.relativePosition;
-  }
 }

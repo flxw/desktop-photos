@@ -1,20 +1,26 @@
+@keyframes slideInFromLeft {
+  0% {
+    background-color rgba(0,0,0, 0) /* Black w/opacity */
+  }
+  100% {
+    background-color rgba(0,0,0, 0.8) /* Black w/opacity */
+  }
+}
+
 .timeshow
-  position absolute
-  right 25px
+  height 25%
+  width 50%
+  position fixed /* Stay in place */
+  z-index 1 /* Sit on top */
+  left 25%
+  top 32%
+  border-radius 10px
+  background-color rgb(0,0,0) /* Black fallback color */
+  background-color rgba(0,0,0, 0.8) /* Black w/opacity */
+  overflow-x hidden /* Disable horizontal scroll */
+  animation 0.1s ease-out 0s 1 slideInFromLeft
 
-.timeshowbox
-  position: relative;
-  width: 150px;
-  height: 40px;
-  background-color: black;
-  color: #fff;
-
-.timeshowbox.arrow-right:after
-  content: " ";
-  position: absolute;
-  right: -5px;
-  top: 10px;
-  border-top: 5px solid transparent;
-  border-right: none;
-  border-left: 5px solid black;
-  border-bottom: 5px solid transparent;
+  p
+    margin 50px 0 0 50px
+    font-size 8rem
+    color white

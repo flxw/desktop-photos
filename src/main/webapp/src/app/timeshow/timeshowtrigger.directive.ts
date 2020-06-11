@@ -12,14 +12,7 @@ export class TimeshowtriggerDirective {
   @HostListener("scroll", ['$event'])
   onScroll(e) {
     if (this.isMouseDown) {
-      if (this.tss.getTimeshowTriggered()) {
-        let currentScrollPosition = e.srcElement.scrollTop;
-        let scrollHeight = e.srcElement.scrollTopMax;
-        
-        this.tss.setRelativeTimeshowPosition(currentScrollPosition / scrollHeight * 100);
-      } else {
-        this.tss.setTimeshowTriggered(true);
-      }
+      this.tss.setTimeshowTriggered(true);
     }
   }
 
